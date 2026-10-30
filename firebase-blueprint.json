@@ -1,0 +1,187 @@
+{
+  "entities": {
+    "SystemSetting": {
+      "title": "SystemSetting",
+      "description": "School and system global configuration",
+      "type": "object",
+      "properties": {
+        "schoolName": { "type": "string" },
+        "affiliation": { "type": "string" },
+        "schoolLogo": { "type": "string" },
+        "directorName": { "type": "string" },
+        "deputyDirectorName": { "type": "string" },
+        "headOfAcademicName": { "type": "string" },
+        "adminPin": { "type": "string" }
+      }
+    },
+    "AcademicYear": {
+      "title": "AcademicYear",
+      "description": "Academic year record",
+      "type": "object",
+      "properties": {
+        "year": { "type": "string" },
+        "isCurrent": { "type": "boolean" },
+        "order": { "type": "number" }
+      },
+      "required": ["year", "isCurrent"]
+    },
+    "Classroom": {
+      "title": "Classroom",
+      "description": "Class and room record",
+      "type": "object",
+      "properties": {
+        "className": { "type": "string" },
+        "room": { "type": "string" },
+        "orderSeq": { "type": "number" }
+      },
+      "required": ["className", "room"]
+    },
+    "AppUser": {
+      "title": "AppUser",
+      "description": "User login credential and profile for teachers and admins",
+      "type": "object",
+      "properties": {
+        "username": { "type": "string" },
+        "password": { "type": "string" },
+        "fullName": { "type": "string" },
+        "role": { "type": "string", "enum": ["ครู", "ผู้ดูแลระบบ"] }
+      },
+      "required": ["username", "fullName", "role"]
+    },
+    "Student": {
+      "title": "Student",
+      "description": "Comprehensive student profile record based on Obec DMC standards",
+      "type": "object",
+      "properties": {
+        "schoolId": { "type": "string" },
+        "schoolName": { "type": "string" },
+        "citizenId": { "type": "string" },
+        "classLevel": { "type": "string" },
+        "room": { "type": "string" },
+        "studentId": { "type": "string" },
+        "gender": { "type": "string" },
+        "prefix": { "type": "string" },
+        "firstName": { "type": "string" },
+        "lastName": { "type": "string" },
+        "firstNameEn": { "type": "string" },
+        "lastNameEn": { "type": "string" },
+        "birthDate": { "type": "string" },
+        "ageYears": { "type": "number" },
+        "ageMonths": { "type": "number" },
+        "bloodGroup": { "type": "string" },
+        "nationality": { "type": "string" },
+        "ethnicity": { "type": "string" },
+        "religion": { "type": "string" },
+        "olderBrothers": { "type": "number" },
+        "youngerBrothers": { "type": "number" },
+        "olderSisters": { "type": "number" },
+        "youngerSisters": { "type": "number" },
+        "childOrder": { "type": "number" },
+        "birthOrder": { "type": "number" },
+        "studyingSiblings": { "type": "number" },
+        "maritalStatusParents": { "type": "string" },
+        "fatherCitizenId": { "type": "string" },
+        "fatherPrefix": { "type": "string" },
+        "fatherFirstName": { "type": "string" },
+        "fatherLastName": { "type": "string" },
+        "fatherOccupation": { "type": "string" },
+        "fatherIncome": { "type": "number" },
+        "fatherPhone": { "type": "string" },
+        "motherCitizenId": { "type": "string" },
+        "motherPrefix": { "type": "string" },
+        "motherFirstName": { "type": "string" },
+        "motherLastName": { "type": "string" },
+        "motherOccupation": { "type": "string" },
+        "motherIncome": { "type": "number" },
+        "motherPhone": { "type": "string" },
+        "guardianRelation": { "type": "string" },
+        "guardianCitizenId": { "type": "string" },
+        "guardianPrefix": { "type": "string" },
+        "guardianFirstName": { "type": "string" },
+        "guardianLastName": { "type": "string" },
+        "guardianOccupation": { "type": "string" },
+        "guardianIncome": { "type": "number" },
+        "guardianPhone": { "type": "string" },
+        "regHouseCode": { "type": "string" },
+        "regHouseNo": { "type": "string" },
+        "regMoo": { "type": "string" },
+        "regStreet": { "type": "string" },
+        "regSubdistrict": { "type": "string" },
+        "regDistrict": { "type": "string" },
+        "regProvince": { "type": "string" },
+        "regZipcode": { "type": "string" },
+        "regPhone": { "type": "string" },
+        "currHouseCode": { "type": "string" },
+        "currHouseNo": { "type": "string" },
+        "currMoo": { "type": "string" },
+        "currStreet": { "type": "string" },
+        "currSubdistrict": { "type": "string" },
+        "currDistrict": { "type": "string" },
+        "currProvince": { "type": "string" },
+        "currZipcode": { "type": "string" },
+        "currPhone": { "type": "string" },
+        "weight": { "type": "number" },
+        "height": { "type": "number" },
+        "disadvantage": { "type": "string" },
+        "isBoarding": { "type": "string" },
+        "lackUniform": { "type": "string" },
+        "lackStationery": { "type": "string" },
+        "lackTextbook": { "type": "string" },
+        "lackLunch": { "type": "string" },
+        "disability": { "type": "string" },
+        "distGravel": { "type": "number" },
+        "distPaved": { "type": "number" },
+        "distWater": { "type": "number" },
+        "travelTime": { "type": "number" },
+        "travelMethod": { "type": "string" },
+        "studentType": { "type": "string" },
+        "gpa": { "type": "number" },
+        "gpax": { "type": "number" },
+        "birthProvince": { "type": "string" },
+        "branchSchoolId": { "type": "string" },
+        "branchSchoolName": { "type": "string" },
+        "cannotDischarge": { "type": "boolean" }
+      },
+      "required": ["studentId", "classLevel", "room", "firstName", "lastName", "gender"]
+    },
+    "HomeroomAssignment": {
+      "title": "HomeroomAssignment",
+      "description": "Teacher assigned to classroom",
+      "type": "object",
+      "properties": {
+        "teacherUsername": { "type": "string" },
+        "teacherName": { "type": "string" },
+        "className": { "type": "string" },
+        "room": { "type": "string" },
+        "academicYear": { "type": "string" }
+      },
+      "required": ["teacherName", "className", "room"]
+    }
+  },
+  "firestore": {
+    "/settings/{settingId}": {
+      "schema": "SystemSetting",
+      "description": "School profile and system setting documents"
+    },
+    "/academic_years/{yearId}": {
+      "schema": "AcademicYear",
+      "description": "Academic school years"
+    },
+    "/classes/{classId}": {
+      "schema": "Classroom",
+      "description": "Class levels and rooms"
+    },
+    "/users/{userId}": {
+      "schema": "AppUser",
+      "description": "System user profiles and roles"
+    },
+    "/students/{studentDocId}": {
+      "schema": "Student",
+      "description": "Student master database records"
+    },
+    "/homeroom_assignments/{assignmentId}": {
+      "schema": "HomeroomAssignment",
+      "description": "Homeroom teacher class assignments"
+    }
+  }
+}

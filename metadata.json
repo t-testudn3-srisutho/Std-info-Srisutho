@@ -1,0 +1,6 @@
+{
+  "name": "ระบบการจัดการฐานข้อมูลนักเรียน (Student Database System)",
+  "description": "ระบบการจัดการฐานข้อมูลนักเรียน ข้อมูลชั้นเรียน ครูประจำชั้น และรายงานทะเบียนนักเรียน",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
