@@ -423,19 +423,105 @@ export async function parseStudentsFromExcel(
   }).filter(s => s.studentId && s.firstName);
 }
 
-// ==================== ROSTER EXCEL WITH 15 COLUMNS ====================
+export function formatThaiBirthDate(dateStr: string): string {
+  if (!dateStr || dateStr.trim() === '' || dateStr === '-') return '-';
+  const clean = dateStr.trim();
+  const parts = clean.split(/[-/.]/);
+  if (parts.length >= 3) {
+    let d = 0;
+    let m = 0;
+    let y = 0;
+
+    // Determine if format is YYYY-MM-DD or DD/MM/YYYY
+    if (parts[0].length === 4) {
+      // YYYY-MM-DD
+      y = parseInt(parts[0], 10);
+      m = parseInt(parts[1], 10);
+      d = parseInt(parts[2], 10);
+    } else if (parts[2].length === 4) {
+      // DD/MM/YYYY
+      d = parseInt(parts[0], 10);
+      m = parseInt(parts[1], 10);
+      y = parseInt(parts[2], 10);
+    } else {
+      const p0 = parseInt(parts[0], 10);
+      const p2 = parseInt(parts[2], 10);
+      if (p0 > 31) {
+        y = p0;
+        m = parseInt(parts[1], 10);
+        d = p2;
+      } else {
+        d = p0;
+        m = parseInt(parts[1], 10);
+        y = p2;
+      }
+    }
+
+    if (isNaN(d) || isNaN(m) || isNaN(y)) return dateStr;
+
+    // Convert CE to Buddhist Era (BE) if < 2400
+    if (y < 2400) {
+      y += 543;
+    }
+
+    const thaiMonths = [
+      '',
+      'ม.ค.',
+      'ก.พ.',
+      'มี.ค.',
+      'เม.ย.',
+      'พ.ค.',
+      'มิ.ย.',
+      'ก.ค.',
+      'ส.ค.',
+      'ก.ย.',
+      'ต.ค.',
+      'พ.ย.',
+      'ธ.ค.',
+    ];
+    const monthStr = thaiMonths[m] || `${m}`;
+    return `${d} ${monthStr} ${y}`;
+  }
+  return dateStr;
+}
+
+export interface RosterOptions {
+  schoolName: string;
+  affiliation: string;
+  classLevel: string;
+  room: string;
+  academicYear: string;
+  teacherName: string;
+  blankColCount: number;
+  showStudentId: boolean;
+  showCitizenId: boolean;
+  showFullName: boolean;
+  showBirthDate: boolean;
+  showGuardianName: boolean;
+  showGuardianCitizenId: boolean;
+}
+
+// ==================== ROSTER EXCEL WITH DYNAMIC COLUMNS ====================
 export function exportClassRosterToExcel(
   students: Student[],
-  meta: {
-    schoolName: string;
-    classLevel: string;
-    room: string;
-    academicYear: string;
-    teacherName: string;
-  }
+  meta: RosterOptions
 ) {
   const maleCount = students.filter(s => s.gender === 'ชาย' || s.gender === 'ช').length;
   const femaleCount = students.filter(s => s.gender === 'หญิง' || s.gender === 'ญ').length;
+  const count = meta.blankColCount || 10;
+
+  // Order: ลำดับ -> (รหัส) -> (เลขปชช) -> (ชื่อนักเรียน) -> (วันเกิด) -> (ผู้ปกครอง) -> (เลขปชชผู้ปกครอง) -> [ช่องเปล่า] -> หมายเหตุ
+  const headerRow: (string | number)[] = ['ลำดับ'];
+  if (meta.showStudentId) headerRow.push('รหัสนักเรียน');
+  if (meta.showCitizenId) headerRow.push('เลขประจำตัวประชาชน');
+  if (meta.showFullName) headerRow.push('ชื่อ - นามสกุล');
+  if (meta.showBirthDate) headerRow.push('วันเกิด');
+  if (meta.showGuardianName) headerRow.push('ชื่อผู้ปกครอง');
+  if (meta.showGuardianCitizenId) headerRow.push('เลขประชาชนผู้ปกครอง');
+  for (let i = 0; i < count; i++) {
+    headerRow.push('');
+  }
+  headerRow.push('หมายเหตุ');
 
   const aoa: (string | number)[][] = [
     [meta.schoolName],
@@ -443,39 +529,67 @@ export function exportClassRosterToExcel(
     [`ชั้น: ${meta.classLevel}    ห้อง: ${meta.room}    ปีการศึกษา: ${meta.academicYear}    ครูประจำชั้น: ${meta.teacherName || '...................................................'}`],
     [`จำนวนนักเรียนทั้งหมด: ${students.length} คน (ชาย: ${maleCount} คน, หญิง: ${femaleCount} คน)`],
     [],
-    ['ลำดับ', 'รหัสนักเรียน', 'เลขประจำตัวประชาชน', 'ชื่อ - นามสกุล', '', '', '', '', '', '', '', '', '', '', 'หมายเหตุ'],
+    headerRow,
+    Array(headerRow.length).fill(''),
   ];
 
   students.forEach((s, idx) => {
-    aoa.push([
-      idx + 1,
-      s.studentId,
-      s.citizenId || '-',
-      `${s.prefix}${s.firstName} ${s.lastName}`,
-      '', '', '', '', '', '', '', '', '', '',
-      s.cannotDischarge ? 'ยังไม่จำหน่าย' : ''
-    ]);
+    const row: (string | number)[] = [idx + 1];
+    if (meta.showStudentId) row.push(s.studentId);
+    if (meta.showCitizenId) row.push(s.citizenId || '-');
+    if (meta.showFullName) row.push(`${s.prefix}${s.firstName} ${s.lastName}`);
+    if (meta.showBirthDate) row.push(formatThaiBirthDate(s.birthDate));
+    if (meta.showGuardianName) row.push(`${s.guardianPrefix || ''}${s.guardianFirstName || ''} ${s.guardianLastName || ''}`.trim() || '-');
+    if (meta.showGuardianCitizenId) row.push(s.guardianCitizenId || '-');
+    for (let i = 0; i < count; i++) {
+      row.push('');
+    }
+    row.push(s.cannotDischarge ? 'ยังไม่จำหน่าย' : '');
+    aoa.push(row);
   });
-
-
 
   const ws = XLSX.utils.aoa_to_sheet(aoa);
 
-  ws['!cols'] = [
-    { wch: 8 },  // ลำดับ
-    { wch: 15 }, // รหัสนักเรียน
-    { wch: 20 }, // เลขประจำตัวประชาชน
-    { wch: 30 }, // ชื่อ - นามสกุล
-    { wch: 4 }, { wch: 4 }, { wch: 4 }, { wch: 4 }, { wch: 4 },
-    { wch: 4 }, { wch: 4 }, { wch: 4 }, { wch: 4 }, { wch: 4 }, // 10 check columns
-    { wch: 20 }, // หมายเหตุ
-  ];
+  let fixedColsCount = 1;
+  if (meta.showStudentId) fixedColsCount++;
+  if (meta.showCitizenId) fixedColsCount++;
+  if (meta.showFullName) fixedColsCount++;
+  if (meta.showBirthDate) fixedColsCount++;
+  if (meta.showGuardianName) fixedColsCount++;
+  if (meta.showGuardianCitizenId) fixedColsCount++;
+
+  const merges: any[] = [];
+  for (let c = 0; c < fixedColsCount; c++) {
+    merges.push({ s: { r: 5, c }, e: { r: 6, c } });
+  }
+  const remarkColIndex = fixedColsCount + count;
+  merges.push({ s: { r: 5, c: remarkColIndex }, e: { r: 6, c: remarkColIndex } });
+  if (count > 1) {
+    merges.push({ s: { r: 5, c: fixedColsCount }, e: { r: 5, c: fixedColsCount + count - 1 } });
+  } else if (count === 1) {
+    merges.push({ s: { r: 5, c: fixedColsCount }, e: { r: 6, c: fixedColsCount } });
+  }
+  ws['!merges'] = merges;
+
+  const cols = [{ wch: 8 }];
+  if (meta.showStudentId) cols.push({ wch: 15 });
+  if (meta.showCitizenId) cols.push({ wch: 20 });
+  if (meta.showFullName) cols.push({ wch: 30 });
+  if (meta.showBirthDate) cols.push({ wch: 16 });
+  if (meta.showGuardianName) cols.push({ wch: 25 });
+  if (meta.showGuardianCitizenId) cols.push({ wch: 20 });
+  for (let i = 0; i < count; i++) {
+    cols.push({ wch: count === 1 ? 35 : 4 });
+  }
+  cols.push({ wch: 20 });
+  ws['!cols'] = cols;
 
   const wb = XLSX.utils.book_new();
   const sheetName = `${meta.classLevel}_ห้อง_${meta.room}`.substring(0, 31);
   XLSX.utils.book_append_sheet(wb, ws, sheetName);
   XLSX.writeFile(wb, `บัญชีรายชื่อ_${meta.classLevel}_ห้อง_${meta.room}_ปี${meta.academicYear}.xlsx`);
 }
+
 
 // ==================== STUDENT SUMMARY REPORT EXCEL ====================
 export interface ClassSummaryReportRow {

@@ -24,6 +24,7 @@ import {
   exportStudentsToExcel,
   downloadStudentTemplate,
   parseStudentsFromExcel,
+  formatThaiBirthDate,
 } from '../../utils/excel';
 
 interface StudentsViewProps {
@@ -822,14 +823,35 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
 
                   <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
                     <div>
-                      <label className="block font-semibold text-slate-700 mb-1">วันเกิด</label>
-                      <input
-                        type="text"
-                        value={formData.birthDate}
-                        onChange={e => handleFormChange('birthDate', e.target.value)}
-                        placeholder="เช่น 2555-05-14"
-                        className="w-full px-3.5 py-2 rounded-xl border border-slate-200 outline-hidden"
-                      />
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="block font-semibold text-slate-700">วันเกิด (ว/ด/ป พ.ศ.)</label>
+                        {formData.birthDate && (
+                          <span className="text-[11px] font-bold text-[#0C7C82]">
+                            {formatThaiBirthDate(formData.birthDate)}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <input
+                          type="text"
+                          value={formData.birthDate}
+                          onChange={e => handleFormChange('birthDate', e.target.value)}
+                          placeholder="เช่น 08/04/2565"
+                          className="w-full px-3 py-2 rounded-xl border border-slate-200 outline-hidden text-xs"
+                        />
+                        <input
+                          type="date"
+                          title="เลือกจากปฏิทิน (Date picker)"
+                          className="p-1.5 rounded-xl border border-slate-200 bg-white text-xs cursor-pointer"
+                          onChange={e => {
+                            if (e.target.value) {
+                              const [y, m, d] = e.target.value.split('-');
+                              const beYear = parseInt(y, 10) + 543;
+                              handleFormChange('birthDate', `${d}/${m}/${beYear}`);
+                            }
+                          }}
+                        />
+                      </div>
                     </div>
                     <div>
                       <label className="block font-semibold text-slate-700 mb-1">อายุ (ปี)</label>
