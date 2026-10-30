@@ -434,21 +434,49 @@ export function exportClassRosterToExcel(
     teacherName: string;
   }
 ) {
-  const data = students.map((s, idx) => {
-    const row: Record<string, string | number> = {
-      'ลำดับ': idx + 1,
-      'รหัสนักเรียน': s.studentId,
-      'เลขประจำตัวประชาชน': s.citizenId,
-      'ชื่อ-นามสกุล': `${s.prefix}${s.firstName} ${s.lastName}`,
-    };
-    for (let i = 1; i <= 15; i++) {
-      row[`ช่องที่ ${i}`] = '';
-    }
-    row['หมายเหตุ'] = s.cannotDischarge ? 'ยังไม่สามารถจำหน่ายได้' : '';
-    return row;
+  const maleCount = students.filter(s => s.gender === 'ชาย' || s.gender === 'ช').length;
+  const femaleCount = students.filter(s => s.gender === 'หญิง' || s.gender === 'ญ').length;
+
+  const aoa: (string | number)[][] = [
+    [meta.schoolName],
+    ['บัญชีรายชื่อนักเรียน.............................................................'],
+    [`ชั้น: ${meta.classLevel}    ห้อง: ${meta.room}    ปีการศึกษา: ${meta.academicYear}    ครูประจำชั้น: ${meta.teacherName || '...................................................'}`],
+    [`จำนวนนักเรียนทั้งหมด: ${students.length} คน (ชาย: ${maleCount} คน, หญิง: ${femaleCount} คน)`],
+    [],
+    ['ลำดับ', 'รหัสนักเรียน', 'เลขประจำตัวประชาชน', 'ชื่อ - นามสกุล', '', '', '', '', '', '', '', '', '', '', 'หมายเหตุ'],
+  ];
+
+  students.forEach((s, idx) => {
+    aoa.push([
+      idx + 1,
+      s.studentId,
+      s.citizenId || '-',
+      `${s.prefix}${s.firstName} ${s.lastName}`,
+      '', '', '', '', '', '', '', '', '', '',
+      s.cannotDischarge ? 'ยังไม่จำหน่าย' : ''
+    ]);
   });
 
-  const ws = XLSX.utils.json_to_sheet(data);
+  aoa.push(
+    [],
+    [],
+    ['', '', '', '', '', '', '', '', '', '', '', '', '', '', 'ลงชื่อ............................................................ครูประจำชั้น'],
+    ['', '', '', '', '', '', '', '', '', '', '', '', '', '', `( ${meta.teacherName || '...................................................'} )`],
+    ['', '', '', '', '', '', '', '', '', '', '', '', '', '', 'วันที่ ......... / ......... / ...............']
+  );
+
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+
+  ws['!cols'] = [
+    { wch: 8 },  // ลำดับ
+    { wch: 15 }, // รหัสนักเรียน
+    { wch: 20 }, // เลขประจำตัวประชาชน
+    { wch: 30 }, // ชื่อ - นามสกุล
+    { wch: 4 }, { wch: 4 }, { wch: 4 }, { wch: 4 }, { wch: 4 },
+    { wch: 4 }, { wch: 4 }, { wch: 4 }, { wch: 4 }, { wch: 4 }, // 10 check columns
+    { wch: 20 }, // หมายเหตุ
+  ];
+
   const wb = XLSX.utils.book_new();
   const sheetName = `${meta.classLevel}_ห้อง_${meta.room}`.substring(0, 31);
   XLSX.utils.book_append_sheet(wb, ws, sheetName);
