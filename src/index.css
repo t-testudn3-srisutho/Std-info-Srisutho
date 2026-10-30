@@ -80,7 +80,7 @@
   }
 
   @page {
-    size: A4 landscape;
-    margin: 1.2cm 1cm 1.2cm 1cm;
+    size: A4 portrait;
+    margin: 1cm;
   }
 }
