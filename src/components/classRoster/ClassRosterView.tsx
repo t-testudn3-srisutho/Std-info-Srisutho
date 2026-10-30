@@ -59,10 +59,19 @@ export const ClassRosterView: React.FC<ClassRosterViewProps> = ({
     return students
       .filter(s => s.classLevel === currentClass && s.room === currentRoom)
       .sort((a, b) => {
-        // Sort by studentId or gender then name
         return a.studentId.localeCompare(b.studentId, undefined, { numeric: true });
       });
   }, [students, currentClass, currentRoom]);
+
+  // Gender counts
+  const maleCount = useMemo(
+    () => classStudents.filter(s => s.gender === 'ชาย' || s.gender === 'ช').length,
+    [classStudents]
+  );
+  const femaleCount = useMemo(
+    () => classStudents.filter(s => s.gender === 'หญิง' || s.gender === 'ญ').length,
+    [classStudents]
+  );
 
   // Actions
   const handlePrint = () => {
@@ -110,7 +119,7 @@ export const ClassRosterView: React.FC<ClassRosterViewProps> = ({
             บัญชีรายชื่อนักเรียนตามชั้น (Class Document Preview)
           </h2>
           <p className="text-xs text-slate-500 mt-1">
-            เลือกชั้นเรียนเพื่อพรีวิวเอกสารทางการ พิมพ์ออกกระดาษ หรือส่งออก Excel และ Word
+            เลือกชั้นเรียนเพื่อพรีวิวเอกสารทางการ พิมพ์ออกกระดาษ หรือส่งออก Excel และ Word (ขอบแคบ 1.27 ซม. และ Font 14)
           </p>
         </div>
 
@@ -161,20 +170,17 @@ export const ClassRosterView: React.FC<ClassRosterViewProps> = ({
         </div>
       </div>
 
-      {/* Document Sheet Preview: Standard A4 Landscape Paper Simulation */}
-      <div className="bg-white rounded-3xl p-6 sm:p-10 border border-slate-200/90 shadow-lg text-slate-800 mx-auto max-w-full overflow-hidden print:p-0 print:border-none print:shadow-none print:rounded-none">
+      {/* Document Sheet Preview: Standard A4 Landscape Paper Simulation with narrow margins (1.27 cm) and Font 14 */}
+      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-lg text-slate-800 mx-auto max-w-full overflow-hidden print:p-0 print:m-0 print:border-none print:shadow-none print:rounded-none" style={{ fontFamily: 'Sarabun, sans-serif' }}>
         {/* Document Official Header */}
-        <div className="text-center pb-4 border-b border-slate-300">
+        <div className="text-center pb-2 border-b border-slate-300 space-y-0.5">
           <div className="text-base sm:text-lg font-bold text-slate-900 leading-snug">
             {settings.schoolName || 'โรงเรียนศรีสุทโธ'}
           </div>
-          <div className="text-xs sm:text-sm text-slate-600 mt-0.5">
-            {settings.affiliation || 'สำนักงานเขตพื้นที่การศึกษามัธยมศึกษาอุดรธานี'}
+          <div className="text-sm sm:text-base font-bold text-slate-900 mt-1">
+            บัญชีรายชื่อนักเรียน.............................................................
           </div>
-          <div className="text-sm sm:text-base font-bold text-slate-900 mt-2">
-            แบบบันทึกผลการพัฒนาคุณภาพผู้เรียนและบัญชีรายชื่อนักเรียน
-          </div>
-          <div className="text-xs sm:text-sm font-medium text-slate-700 mt-1 flex flex-wrap items-center justify-center gap-4">
+          <div className="text-xs sm:text-sm font-medium text-slate-800 mt-0.5 flex flex-wrap items-center justify-center gap-3">
             <span>
               ชั้น: <strong className="font-bold text-slate-900">{currentClass || '-'}</strong>
             </span>
@@ -187,42 +193,36 @@ export const ClassRosterView: React.FC<ClassRosterViewProps> = ({
             <span>
               ครูประจำชั้น: <strong className="font-bold text-slate-900">{homeroomTeacher}</strong>
             </span>
-            <span>
-              จำนวนนักเรียน: <strong className="font-bold text-[#0C7C82]">{classStudents.length}</strong> คน
-            </span>
+          </div>
+          <div className="text-xs sm:text-sm font-medium text-slate-800">
+            จำนวนนักเรียนทั้งหมด: <strong className="font-bold text-[#0C7C82]">{classStudents.length}</strong> คน (ชาย: <strong className="font-bold text-[#0C7C82]">{maleCount}</strong> คน, หญิง: <strong className="font-bold text-rose-600">{femaleCount}</strong> คน)
           </div>
         </div>
 
-        {/* Document Table (15 Empty Columns for grading/attendance check) */}
-        <div className="mt-5 overflow-x-auto">
-          <table className="w-full border-collapse border border-slate-400 text-xs">
+        {/* Document Table */}
+        <div className="mt-3 overflow-x-auto">
+          <table className="w-full border-collapse border border-slate-400 text-xs" style={{ fontSize: '14pt' }}>
             <thead>
-              <tr className="bg-slate-100 text-slate-800 font-bold text-center">
-                <th rowSpan={2} className="border border-slate-400 p-2 w-12 text-center">
+              <tr className="bg-slate-100 text-slate-900 font-bold text-center">
+                <th rowSpan={2} className="border border-slate-400 p-1.5 w-12 text-center">
                   ลำดับ
                 </th>
-                <th rowSpan={2} className="border border-slate-400 p-2 w-24 text-center">
+                <th rowSpan={2} className="border border-slate-400 p-1.5 w-24 text-center">
                   รหัสนักเรียน
                 </th>
-                <th rowSpan={2} className="border border-slate-400 p-2 w-32 text-center">
+                <th rowSpan={2} className="border border-slate-400 p-1.5 w-32 text-center">
                   เลขประจำตัวประชาชน
                 </th>
-                <th rowSpan={2} className="border border-slate-400 p-2 min-w-[180px] text-left">
+                <th rowSpan={2} className="border border-slate-400 p-1.5 min-w-[180px] text-left">
                   ชื่อ - นามสกุล
                 </th>
-                <th colSpan={15} className="border border-slate-400 p-1 text-center bg-slate-50 font-medium">
-                  ช่องคะแนน / ตรวจสอบการเข้าเรียน (1 - 15)
-                </th>
-                <th rowSpan={2} className="border border-slate-400 p-2 w-24 text-center">
+                {/* 15 equal width check columns without numbers */}
+                {Array.from({ length: 15 }, (_, i) => (
+                  <th key={i} className="border border-slate-400 p-1 w-6 min-w-[24px] bg-slate-50"></th>
+                ))}
+                <th rowSpan={2} className="border border-slate-400 p-1.5 w-24 text-center">
                   หมายเหตุ
                 </th>
-              </tr>
-              <tr className="bg-slate-50 text-[10px] text-slate-600 font-bold">
-                {Array.from({ length: 15 }, (_, i) => (
-                  <th key={i} className="border border-slate-400 p-1 w-6 text-center">
-                    {i + 1}
-                  </th>
-                ))}
               </tr>
             </thead>
             <tbody>
@@ -235,24 +235,24 @@ export const ClassRosterView: React.FC<ClassRosterViewProps> = ({
               ) : (
                 classStudents.map((s, idx) => (
                   <tr key={s.id} className="hover:bg-slate-50/80 transition">
-                    <td className="border border-slate-400 p-2 text-center font-mono font-medium">
+                    <td className="border border-slate-400 p-1.5 text-center font-mono font-medium">
                       {idx + 1}
                     </td>
-                    <td className="border border-slate-400 p-2 text-center font-mono font-bold text-slate-800">
+                    <td className="border border-slate-400 p-1.5 text-center font-mono font-bold text-slate-900">
                       {s.studentId}
                     </td>
-                    <td className="border border-slate-400 p-2 text-center font-mono text-[11px] text-slate-600">
+                    <td className="border border-slate-400 p-1.5 text-center font-mono text-[11px] text-slate-700">
                       {s.citizenId || '-'}
                     </td>
-                    <td className="border border-slate-400 p-2 font-medium text-slate-800 whitespace-nowrap">
-                      <span className="text-slate-500 mr-1">{s.prefix}</span>
+                    <td className="border border-slate-400 p-1.5 font-medium text-slate-900 whitespace-nowrap">
+                      <span className="text-slate-600 mr-1">{s.prefix}</span>
                       {s.firstName} {s.lastName}
                     </td>
-                    {/* 15 Empty Check Columns */}
+                    {/* 15 Empty Equal Width Check Columns */}
                     {Array.from({ length: 15 }, (_, i) => (
-                      <td key={i} className="border border-slate-400 p-1 h-7"></td>
+                      <td key={i} className="border border-slate-400 p-0 h-6 w-6 min-w-[24px]"></td>
                     ))}
-                    <td className="border border-slate-400 p-2 text-center text-[10px] text-slate-500">
+                    <td className="border border-slate-400 p-1.5 text-center text-[10px] text-slate-600">
                       {s.cannotDischarge ? 'ยังไม่จำหน่าย' : ''}
                     </td>
                   </tr>
@@ -263,16 +263,16 @@ export const ClassRosterView: React.FC<ClassRosterViewProps> = ({
         </div>
 
         {/* Document Official Signature Footer */}
-        <div className="mt-10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-6 text-xs text-slate-700">
-          <div className="space-y-1 text-center sm:text-left">
+        <div className="mt-6 pt-2 flex flex-col sm:flex-row items-center justify-between gap-6 text-xs text-slate-800">
+          <div className="space-y-0.5 text-center sm:text-left">
             <div>พิมพ์เมื่อวันที่: {new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
-            <div className="text-[11px] text-slate-500">ระบบการจัดการฐานข้อมูลนักเรียน (SDS) &bull; {settings.schoolName}</div>
+            <div className="text-[11px] text-slate-600">ระบบการจัดการฐานข้อมูลนักเรียน (SDS) &bull; {settings.schoolName}</div>
           </div>
 
-          <div className="text-center sm:text-right space-y-2">
+          <div className="text-center sm:text-right space-y-1">
             <div>ลงชื่อ..................................................................ครูประจำชั้น</div>
             <div className="font-semibold">( {homeroomTeacher} )</div>
-            <div className="text-[11px] text-slate-500">ตำแหน่ง ครูประจำชั้น {currentClass} ห้อง {currentRoom}</div>
+            <div className="text-[11px] text-slate-600">ตำแหน่ง ครูประจำชั้น {currentClass} ห้อง {currentRoom}</div>
           </div>
         </div>
       </div>
