@@ -119,7 +119,7 @@ export const ClassRosterView: React.FC<ClassRosterViewProps> = ({
             บัญชีรายชื่อนักเรียนตามชั้น (Class Document Preview)
           </h2>
           <p className="text-xs text-slate-500 mt-1">
-            พรีวิวเอกสารขนาด A4 แนวตั้ง (ขอบแคบ 1 ซม., ตัวอักษรสีดำ 14pt, คำนำหน้าชื่อติดกับชื่อ, ตารางปกติ)
+            พรีวิวเอกสารขนาด A4 แนวตั้ง (ขอบแคบ 1 ซม., ตัวอักษรสีดำขนาด 12pt, พอดีหน้ากระดาษ A4)
           </p>
         </div>
 
@@ -170,20 +170,20 @@ export const ClassRosterView: React.FC<ClassRosterViewProps> = ({
         </div>
       </div>
 
-      {/* Document Sheet Preview: Standard A4 Portrait Paper Simulation (210mm x 297mm approx max-w-3xl) */}
+      {/* Document Sheet Preview: Standard A4 Portrait Paper Simulation (210mm x 297mm approx max-w-[210mm]) */}
       <div 
         className="bg-white rounded-2xl p-6 sm:p-8 border border-black/30 shadow-xl text-black mx-auto max-w-[210mm] overflow-hidden print:p-0 print:m-0 print:border-none print:shadow-none print:rounded-none" 
-        style={{ fontFamily: 'Sarabun, sans-serif', fontSize: '14pt', color: '#000' }}
+        style={{ fontFamily: 'Sarabun, sans-serif', fontSize: '12pt', color: '#000' }}
       >
         {/* Document Official Header */}
         <div className="text-center pb-2 border-b border-black space-y-0.5">
-          <div className="font-bold text-black leading-snug" style={{ fontSize: '16pt' }}>
+          <div className="font-bold text-black leading-snug" style={{ fontSize: '14pt' }}>
             {settings.schoolName || 'โรงเรียนศรีสุทโธ'}
           </div>
-          <div className="font-bold text-black mt-1" style={{ fontSize: '15pt' }}>
+          <div className="font-bold text-black mt-1" style={{ fontSize: '13pt' }}>
             บัญชีรายชื่อนักเรียน.............................................................
           </div>
-          <div className="font-normal text-black mt-0.5 flex flex-wrap items-center justify-center gap-3" style={{ fontSize: '14pt' }}>
+          <div className="font-normal text-black mt-0.5 flex flex-wrap items-center justify-center gap-3" style={{ fontSize: '12pt' }}>
             <span>
               ชั้น: <strong className="font-bold text-black">{currentClass || '-'}</strong>
             </span>
@@ -197,33 +197,33 @@ export const ClassRosterView: React.FC<ClassRosterViewProps> = ({
               ครูประจำชั้น: <strong className="font-bold text-black">{homeroomTeacher}</strong>
             </span>
           </div>
-          <div className="font-normal text-black" style={{ fontSize: '14pt' }}>
+          <div className="font-normal text-black" style={{ fontSize: '12pt' }}>
             จำนวนนักเรียนทั้งหมด: <strong className="font-bold text-black">{classStudents.length}</strong> คน (ชาย: <strong className="font-bold text-black">{maleCount}</strong> คน, หญิง: <strong className="font-bold text-black">{femaleCount}</strong> คน)
           </div>
         </div>
 
-        {/* Document Table (10 Check Columns, 14pt Font, Non-bold data cells, Pure Black) */}
+        {/* Document Table (10 Check Columns, 12pt Font, Non-bold data cells, Pure Black) */}
         <div className="mt-3 overflow-x-auto">
-          <table className="w-full border-collapse border border-black text-black" style={{ fontSize: '14pt', color: '#000' }}>
+          <table className="w-full border-collapse border border-black text-black" style={{ fontSize: '12pt', color: '#000' }}>
             <thead>
-              <tr className="bg-slate-100 text-black font-bold text-center" style={{ fontSize: '14pt' }}>
-                <th rowSpan={2} className="border border-black p-1.5 w-12 text-center text-black" style={{ fontSize: '14pt' }}>
+              <tr className="bg-slate-100 text-black font-bold text-center" style={{ fontSize: '12pt' }}>
+                <th rowSpan={2} className="border border-black p-1 w-10 text-center text-black" style={{ fontSize: '12pt' }}>
                   ลำดับ
                 </th>
-                <th rowSpan={2} className="border border-black p-1.5 w-24 text-center text-black" style={{ fontSize: '14pt' }}>
+                <th rowSpan={2} className="border border-black p-1 w-20 text-center text-black" style={{ fontSize: '12pt' }}>
                   รหัสนักเรียน
                 </th>
-                <th rowSpan={2} className="border border-black p-1.5 w-32 text-center text-black" style={{ fontSize: '14pt' }}>
+                <th rowSpan={2} className="border border-black p-1 w-28 text-center text-black" style={{ fontSize: '12pt' }}>
                   เลขประจำตัวประชาชน
                 </th>
-                <th rowSpan={2} className="border border-black p-1.5 min-w-[160px] text-left text-black" style={{ fontSize: '14pt' }}>
+                <th rowSpan={2} className="border border-black p-1 min-w-[140px] text-left text-black" style={{ fontSize: '12pt' }}>
                   ชื่อ - นามสกุล
                 </th>
                 {/* 10 equal width check columns without numbers */}
                 {Array.from({ length: 10 }, (_, i) => (
-                  <th key={i} className="border border-black p-1 w-6 min-w-[24px] bg-slate-50"></th>
+                  <th key={i} className="border border-black p-0.5 w-5 min-w-[20px] bg-slate-50"></th>
                 ))}
-                <th rowSpan={2} className="border border-black p-1.5 w-24 text-center text-black" style={{ fontSize: '14pt' }}>
+                <th rowSpan={2} className="border border-black p-1 w-20 text-center text-black" style={{ fontSize: '12pt' }}>
                   หมายเหตุ
                 </th>
               </tr>
@@ -231,30 +231,30 @@ export const ClassRosterView: React.FC<ClassRosterViewProps> = ({
             <tbody>
               {classStudents.length === 0 ? (
                 <tr>
-                  <td colSpan={15} className="border border-black p-8 text-center text-black" style={{ fontSize: '14pt' }}>
+                  <td colSpan={15} className="border border-black p-6 text-center text-black" style={{ fontSize: '12pt' }}>
                     ไม่พบข้อมูลนักเรียนในชั้นเรียนนี้ (สามารถเพิ่มข้อมูลในเมนูเพิ่มนักเรียน)
                   </td>
                 </tr>
               ) : (
                 classStudents.map((s, idx) => (
-                  <tr key={s.id} className="text-black" style={{ fontSize: '14pt' }}>
-                    <td className="border border-black p-1.5 text-center font-normal text-black" style={{ fontSize: '14pt' }}>
+                  <tr key={s.id} className="text-black" style={{ fontSize: '12pt' }}>
+                    <td className="border border-black p-1 text-center font-normal text-black" style={{ fontSize: '12pt' }}>
                       {idx + 1}
                     </td>
-                    <td className="border border-black p-1.5 text-center font-normal text-black" style={{ fontSize: '14pt' }}>
+                    <td className="border border-black p-1 text-center font-normal text-black" style={{ fontSize: '12pt' }}>
                       {s.studentId}
                     </td>
-                    <td className="border border-black p-1.5 text-center font-normal text-black" style={{ fontSize: '14pt' }}>
+                    <td className="border border-black p-1 text-center font-normal text-black" style={{ fontSize: '12pt' }}>
                       {s.citizenId || '-'}
                     </td>
-                    <td className="border border-black p-1.5 font-normal text-black whitespace-nowrap" style={{ fontSize: '14pt' }}>
+                    <td className="border border-black p-1 font-normal text-black whitespace-nowrap" style={{ fontSize: '12pt' }}>
                       {s.prefix}{s.firstName} {s.lastName}
                     </td>
                     {/* 10 Empty Equal Width Check Columns */}
                     {Array.from({ length: 10 }, (_, i) => (
-                      <td key={i} className="border border-black p-0 h-7 w-6 min-w-[24px]"></td>
+                      <td key={i} className="border border-black p-0 h-6 w-5 min-w-[20px]"></td>
                     ))}
-                    <td className="border border-black p-1.5 text-center font-normal text-black" style={{ fontSize: '14pt' }}>
+                    <td className="border border-black p-1 text-center font-normal text-black" style={{ fontSize: '12pt' }}>
                       {s.cannotDischarge ? 'ยังไม่จำหน่าย' : ''}
                     </td>
                   </tr>
@@ -265,16 +265,16 @@ export const ClassRosterView: React.FC<ClassRosterViewProps> = ({
         </div>
 
         {/* Document Official Signature Footer */}
-        <div className="mt-6 pt-2 flex flex-col sm:flex-row items-center justify-between gap-6 text-black font-normal" style={{ fontSize: '14pt' }}>
+        <div className="mt-5 pt-2 flex flex-col sm:flex-row items-center justify-between gap-6 text-black font-normal" style={{ fontSize: '12pt' }}>
           <div className="space-y-0.5 text-center sm:text-left text-black">
             <div>พิมพ์เมื่อวันที่: {new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
-            <div className="text-black" style={{ fontSize: '12pt' }}>ระบบการจัดการฐานข้อมูลนักเรียน (SDS) &bull; {settings.schoolName}</div>
+            <div className="text-black" style={{ fontSize: '10pt' }}>ระบบการจัดการฐานข้อมูลนักเรียน (SDS) &bull; {settings.schoolName}</div>
           </div>
 
           <div className="text-center sm:text-right space-y-1 text-black">
             <div>ลงชื่อ..................................................................ครูประจำชั้น</div>
             <div className="font-normal">( {homeroomTeacher} )</div>
-            <div className="text-black" style={{ fontSize: '12pt' }}>ตำแหน่ง ครูประจำชั้น {currentClass} ห้อง {currentRoom}</div>
+            <div className="text-black" style={{ fontSize: '10pt' }}>ตำแหน่ง ครูประจำชั้น {currentClass} ห้อง {currentRoom}</div>
           </div>
         </div>
       </div>

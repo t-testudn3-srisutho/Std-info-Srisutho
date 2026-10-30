@@ -14,20 +14,19 @@ export function exportClassRosterToWord(
   const maleCount = students.filter(s => s.gender === 'ชาย' || s.gender === 'ช').length;
   const femaleCount = students.filter(s => s.gender === 'หญิง' || s.gender === 'ญ').length;
 
-  // 10 equal width check columns with numbers removed (empty th)
-  const headerCols = Array.from({ length: 10 }, () => `<th style="width: 22px; min-width: 22px; max-width: 22px; border: 1px solid #000; padding: 2px; text-align: center; font-size: 14pt; background-color: #f9f9f9; color: #000;"></th>`).join('');
+  // 10 equal width check columns fitting A4 portrait width
+  const headerCols = Array.from({ length: 10 }, () => `<th style="width: 18px; min-width: 18px; max-width: 18px; border: 1px solid #000; padding: 2px; text-align: center; font-size: 12pt; background-color: #f9f9f9; color: #000;"></th>`).join('');
 
   const rows = students.map((s, idx) => {
-    const blankCols = Array.from({ length: 10 }, () => `<td style="width: 22px; min-width: 22px; max-width: 22px; border: 1px solid #000; height: 26px; padding: 0; margin: 0;"></td>`).join('');
-    // Prefix and first name attached together, table text non-bold, pure black
+    const blankCols = Array.from({ length: 10 }, () => `<td style="width: 18px; min-width: 18px; max-width: 18px; border: 1px solid #000; height: 24px; padding: 0; margin: 0;"></td>`).join('');
     return `
       <tr>
-        <td style="border: 1px solid #000; text-align: center; padding: 2px; font-size: 14pt; margin: 0; font-weight: normal; color: #000;">${idx + 1}</td>
-        <td style="border: 1px solid #000; text-align: center; padding: 2px; font-size: 14pt; margin: 0; font-weight: normal; color: #000;">${s.studentId}</td>
-        <td style="border: 1px solid #000; text-align: center; padding: 2px; font-size: 14pt; margin: 0; font-weight: normal; color: #000;">${s.citizenId || '-'}</td>
-        <td style="border: 1px solid #000; padding: 2px 6px; font-size: 14pt; white-space: nowrap; margin: 0; font-weight: normal; color: #000;">${s.prefix}${s.firstName} ${s.lastName}</td>
+        <td style="border: 1px solid #000; text-align: center; padding: 2px; font-size: 12pt; margin: 0; font-weight: normal; color: #000;">${idx + 1}</td>
+        <td style="border: 1px solid #000; text-align: center; padding: 2px; font-size: 12pt; margin: 0; font-weight: normal; color: #000;">${s.studentId}</td>
+        <td style="border: 1px solid #000; text-align: center; padding: 2px; font-size: 12pt; margin: 0; font-weight: normal; color: #000;">${s.citizenId || '-'}</td>
+        <td style="border: 1px solid #000; padding: 2px 4px; font-size: 12pt; white-space: nowrap; margin: 0; font-weight: normal; color: #000;">${s.prefix}${s.firstName} ${s.lastName}</td>
         ${blankCols}
-        <td style="border: 1px solid #000; padding: 2px; font-size: 14pt; text-align: center; margin: 0; font-weight: normal; color: #000;">${s.cannotDischarge ? 'ยังไม่จำหน่าย' : ''}</td>
+        <td style="border: 1px solid #000; padding: 2px; font-size: 12pt; text-align: center; margin: 0; font-weight: normal; color: #000;">${s.cannotDischarge ? 'ยังไม่จำหน่าย' : ''}</td>
       </tr>
     `;
   }).join('');
@@ -49,7 +48,7 @@ export function exportClassRosterToWord(
         body {
           font-family: 'Sarabun', 'TH Sarabun New', sans-serif;
           color: #000;
-          font-size: 14pt;
+          font-size: 12pt;
           margin: 0;
           padding: 0;
           line-height: 1.15;
@@ -60,40 +59,40 @@ export function exportClassRosterToWord(
           margin-top: 0;
           margin-bottom: 0;
           line-height: 1.15;
-          font-size: 14pt;
+          font-size: 12pt;
           color: #000;
         }
         .header {
           text-align: center;
-          margin-bottom: 6px;
+          margin-bottom: 4px;
         }
         .title {
-          font-size: 16pt;
+          font-size: 14pt;
           font-weight: bold;
           color: #000;
         }
         .subtitle {
-          font-size: 14pt;
+          font-size: 12pt;
           color: #000;
         }
         table {
           width: 100%;
           border-collapse: collapse;
-          margin-top: 4px;
-          font-size: 14pt;
+          margin-top: 3px;
+          font-size: 12pt;
           color: #000;
         }
         th, td {
           border: 1px solid #000;
-          padding: 3px 4px;
+          padding: 2px 3px;
           margin: 0;
-          font-size: 14pt;
+          font-size: 12pt;
           color: #000;
           font-weight: normal;
         }
         th {
           background-color: #f2f2f2;
-          font-size: 14pt;
+          font-size: 12pt;
           font-weight: bold;
           color: #000;
         }
@@ -102,13 +101,13 @@ export function exportClassRosterToWord(
     <body>
       <div class="header">
         <div class="title">${meta.schoolName}</div>
-        <div class="subtitle" style="font-weight: bold; font-size: 15pt; margin-top: 2px;">
+        <div class="subtitle" style="font-weight: bold; font-size: 13pt; margin-top: 2px;">
           บัญชีรายชื่อนักเรียน.............................................................
         </div>
-        <div class="subtitle" style="margin-top: 2px; font-size: 14pt;">
+        <div class="subtitle" style="margin-top: 2px; font-size: 12pt;">
           ชั้น: <b>${meta.classLevel}</b> &nbsp;&nbsp;&nbsp; ห้อง: <b>${meta.room}</b> &nbsp;&nbsp;&nbsp; ปีการศึกษา: <b>${meta.academicYear}</b> &nbsp;&nbsp;&nbsp; ครูประจำชั้น: <b>${meta.teacherName || '...................................................'}</b>
         </div>
-        <div class="subtitle" style="margin-top: 2px; font-size: 14pt;">
+        <div class="subtitle" style="margin-top: 2px; font-size: 12pt;">
           จำนวนนักเรียนทั้งหมด: <b>${students.length}</b> คน (ชาย: <b>${maleCount}</b> คน, หญิง: <b>${femaleCount}</b> คน)
         </div>
       </div>
@@ -116,12 +115,12 @@ export function exportClassRosterToWord(
       <table>
         <thead>
           <tr>
-            <th rowspan="2" style="width: 40px; text-align: center;">ลำดับ</th>
-            <th rowspan="2" style="width: 75px; text-align: center;">รหัสนักเรียน</th>
-            <th rowspan="2" style="width: 115px; text-align: center;">เลขประจำตัวประชาชน</th>
-            <th rowspan="2" style="width: 170px; text-align: left;">ชื่อ - นามสกุล</th>
+            <th rowspan="2" style="width: 35px; text-align: center;">ลำดับ</th>
+            <th rowspan="2" style="width: 70px; text-align: center;">รหัสนักเรียน</th>
+            <th rowspan="2" style="width: 105px; text-align: center;">เลขประจำตัวประชาชน</th>
+            <th rowspan="2" style="width: 140px; text-align: left;">ชื่อ - นามสกุล</th>
             <th colspan="10" style="background-color: #f2f2f2;"></th>
-            <th rowspan="2" style="width: 80px; text-align: center;">หมายเหตุ</th>
+            <th rowspan="2" style="width: 70px; text-align: center;">หมายเหตุ</th>
           </tr>
           <tr>
             ${headerCols}
@@ -132,7 +131,7 @@ export function exportClassRosterToWord(
         </tbody>
       </table>
 
-      <div style="width: 100%; text-align: right; margin-top: 15px; font-size: 14pt; color: #000;">
+      <div style="width: 100%; text-align: right; margin-top: 12px; font-size: 12pt; color: #000;">
         ลงชื่อ............................................................ครูประจำชั้น<br/>
         ( ${meta.teacherName || '...................................................'} )<br/>
         วันที่ ......... / ......... / ...............
