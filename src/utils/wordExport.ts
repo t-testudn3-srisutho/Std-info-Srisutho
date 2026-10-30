@@ -131,11 +131,7 @@ export function exportClassRosterToWord(
         </tbody>
       </table>
 
-      <div style="width: 100%; text-align: right; margin-top: 12px; font-size: 12pt; color: #000;">
-        ลงชื่อ............................................................ครูประจำชั้น<br/>
-        ( ${meta.teacherName || '...................................................'} )<br/>
-        วันที่ ......... / ......... / ...............
-      </div>
+
     </body>
     </html>
   `;

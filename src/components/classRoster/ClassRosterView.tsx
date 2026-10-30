@@ -263,20 +263,6 @@ export const ClassRosterView: React.FC<ClassRosterViewProps> = ({
             </tbody>
           </table>
         </div>
-
-        {/* Document Official Signature Footer */}
-        <div className="mt-5 pt-2 flex flex-col sm:flex-row items-center justify-between gap-6 text-black font-normal" style={{ fontSize: '12pt' }}>
-          <div className="space-y-0.5 text-center sm:text-left text-black">
-            <div>พิมพ์เมื่อวันที่: {new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
-            <div className="text-black" style={{ fontSize: '10pt' }}>ระบบการจัดการฐานข้อมูลนักเรียน (SDS) &bull; {settings.schoolName}</div>
-          </div>
-
-          <div className="text-center sm:text-right space-y-1 text-black">
-            <div>ลงชื่อ..................................................................ครูประจำชั้น</div>
-            <div className="font-normal">( {homeroomTeacher} )</div>
-            <div className="text-black" style={{ fontSize: '10pt' }}>ตำแหน่ง ครูประจำชั้น {currentClass} ห้อง {currentRoom}</div>
-          </div>
-        </div>
       </div>
     </div>
   );
