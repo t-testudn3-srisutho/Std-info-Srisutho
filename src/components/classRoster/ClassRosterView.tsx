@@ -365,7 +365,7 @@ export const ClassRosterView: React.FC<ClassRosterViewProps> = ({
         <div>
           <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
             <FileText className="w-5 h-5 text-[#0C7C82]" />
-            บัญชีรายชื่อนักเรียนตามชั้น (Class Document Preview)
+            พิมพ์รายชื่อนักเรียน (Class Roster Print Preview)
           </h2>
         </div>
 

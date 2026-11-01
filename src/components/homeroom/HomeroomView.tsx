@@ -14,7 +14,7 @@ import { HomeroomAssignment, AppUser, Classroom, AcademicYear } from '../../type
 
 interface HomeroomViewProps {
   assignments: HomeroomAssignment[];
-  users: AppUser[];
+  users?: AppUser[];
   classrooms: Classroom[];
   academicYears: AcademicYear[];
   onSave: (item: HomeroomAssignment) => Promise<void>;
@@ -31,7 +31,6 @@ interface HomeroomViewProps {
 
 export const HomeroomView: React.FC<HomeroomViewProps> = ({
   assignments,
-  users,
   classrooms,
   academicYears,
   onSave,
@@ -42,17 +41,21 @@ export const HomeroomView: React.FC<HomeroomViewProps> = ({
 }) => {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<HomeroomAssignment | null>(null);
-  const [selectedTeacherUsername, setSelectedTeacherUsername] = useState('');
+  const [teacherNameInput, setTeacherNameInput] = useState('');
   const [selectedClassId, setSelectedClassId] = useState('');
   const [selectedYear, setSelectedYear] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10; // Requirement: max 10 per page
 
-  // Filter only teachers (or users who can be homeroom)
-  const teacherList = useMemo(() => {
-    return users.filter(u => u.role === 'ครู' || u.role === 'ผู้ดูแลระบบ');
-  }, [users]);
+  // Existing teacher names list for quick autocompletion / datalist suggestions
+  const existingTeacherNames = useMemo(() => {
+    const set = new Set<string>();
+    assignments.forEach(a => {
+      if (a.teacherName) set.add(a.teacherName.trim());
+    });
+    return Array.from(set);
+  }, [assignments]);
 
   const currentYear = academicYears.find(y => y.isCurrent)?.year || '2567';
 
@@ -65,7 +68,7 @@ export const HomeroomView: React.FC<HomeroomViewProps> = ({
 
   const handleOpenAdd = () => {
     setEditingItem(null);
-    setSelectedTeacherUsername(teacherList[0]?.username || '');
+    setTeacherNameInput('');
     const firstCls = classrooms[0];
     setSelectedClassId(firstCls ? `${firstCls.className}_${firstCls.room}` : '');
     setSelectedYear(currentYear);
@@ -74,7 +77,7 @@ export const HomeroomView: React.FC<HomeroomViewProps> = ({
 
   const handleOpenEdit = (item: HomeroomAssignment) => {
     setEditingItem(item);
-    setSelectedTeacherUsername(item.teacherUsername || '');
+    setTeacherNameInput(item.teacherName || '');
     setSelectedClassId(`${item.className}_${item.room}`);
     setSelectedYear(item.academicYear);
     setModalOpen(true);
@@ -82,21 +85,23 @@ export const HomeroomView: React.FC<HomeroomViewProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedTeacherUsername || !selectedClassId) {
-      showToast('warning', 'กรุณาเลือกครูและชั้นเรียน');
+    if (!teacherNameInput.trim()) {
+      showToast('warning', 'กรุณากรอกชื่อ-นามสกุล ครูประจำชั้น');
+      return;
+    }
+    if (!selectedClassId) {
+      showToast('warning', 'กรุณาเลือกชั้นเรียนและห้อง');
       return;
     }
 
-    const teacher = teacherList.find(t => t.username === selectedTeacherUsername);
-    const teacherName = teacher ? teacher.fullName : selectedTeacherUsername;
     const [className, room] = selectedClassId.split('_');
 
     setIsSubmitting(true);
     try {
       const payload: HomeroomAssignment = {
         id: editingItem ? editingItem.id : `hr_${Date.now()}`,
-        teacherUsername: selectedTeacherUsername,
-        teacherName,
+        teacherUsername: editingItem?.teacherUsername || '',
+        teacherName: teacherNameInput.trim(),
         className,
         room,
         academicYear: selectedYear || currentYear,
@@ -154,7 +159,7 @@ export const HomeroomView: React.FC<HomeroomViewProps> = ({
             มอบหมายครูประจำชั้น (Homeroom Teachers)
           </h2>
           <p className="text-xs text-slate-500 mt-1">
-            กำหนดครูประจำชั้นให้กับห้องเรียนต่างๆ แสดง {itemsPerPage} รายการต่อหน้า
+            กำหนดครูประจำชั้นให้กับห้องเรียนต่างๆ โดยกรอกชื่อครูประจำชั้นได้โดยตรง แสดง {itemsPerPage} รายการต่อหน้า
           </p>
         </div>
 
@@ -321,20 +326,28 @@ export const HomeroomView: React.FC<HomeroomViewProps> = ({
             <form onSubmit={handleSubmit} className="space-y-4 mt-5">
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                  เลือกครูผู้สอน <span className="text-rose-500">*</span>
+                  ชื่อ-นามสกุล ครูประจำชั้น <span className="text-rose-500">*</span>
                 </label>
-                <select
-                  value={selectedTeacherUsername}
-                  onChange={e => setSelectedTeacherUsername(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:border-[#0C7C82] outline-hidden bg-white"
+                <input
+                  type="text"
+                  list="teacher-suggestions"
+                  value={teacherNameInput}
+                  onChange={e => setTeacherNameInput(e.target.value)}
+                  placeholder="กรอกชื่อ-นามสกุล ครูประจำชั้น (เช่น ครูสมชาย ใจดี หรือ นายสมหมาย สุขใจ)"
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:border-[#0C7C82] focus:ring-1 focus:ring-[#0C7C82] outline-hidden bg-white"
                   required
-                >
-                  {teacherList.map(t => (
-                    <option key={t.id} value={t.username}>
-                      {t.fullName} ({t.role})
-                    </option>
-                  ))}
-                </select>
+                  autoFocus
+                />
+                {existingTeacherNames.length > 0 && (
+                  <datalist id="teacher-suggestions">
+                    {existingTeacherNames.map(name => (
+                      <option key={name} value={name} />
+                    ))}
+                  </datalist>
+                )}
+                <p className="text-[11px] text-slate-400 mt-1">
+                  กรอกชื่อ-นามสกุลครูประจำชั้นโดยตรงเพื่อมอบหมายประจำห้องเรียน
+                </p>
               </div>
 
               <div>

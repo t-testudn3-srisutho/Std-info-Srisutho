@@ -36,11 +36,9 @@ import {
   DEFAULT_SETTINGS,
 } from './services/db';
 import { LoginView } from './components/auth/LoginView';
-import { DashboardView } from './components/dashboard/DashboardView';
 import { SettingsView } from './components/settings/SettingsView';
 import { AcademicYearsView } from './components/academicYears/AcademicYearsView';
 import { ClassroomsView, compareClassrooms } from './components/classrooms/ClassroomsView';
-import { UsersView } from './components/users/UsersView';
 import { StudentsView } from './components/students/StudentsView';
 import { HomeroomView } from './components/homeroom/HomeroomView';
 import { ClassRosterView } from './components/classRoster/ClassRosterView';
@@ -50,21 +48,52 @@ import { Navbar } from './components/layout/Navbar';
 import { Footer } from './components/layout/Footer';
 import { SweetAlertModal, ToastNotification, AlertConfig, ConfirmConfig } from './components/common/SweetAlert';
 import { CardSkeleton, TableSkeleton, ChartSkeleton } from './components/common/Skeleton';
+import { PinNumpadModal } from './components/common/PinNumpadModal';
+import { KeyRound } from 'lucide-react';
+
+export const DEFAULT_TEACHER_USER: AppUser = {
+  id: 'teacher_guest',
+  username: 'teacher',
+  fullName: 'ครูผู้สอน',
+  role: 'ครู',
+};
 
 export default function App() {
-  // Authentication & Session
-  const [currentUser, setCurrentUser] = useState<AppUser | null>(() => {
+  // Authentication & Session - Default directly to Teacher without login screen
+  const [currentUser, setCurrentUser] = useState<AppUser>(() => {
     try {
       const saved = localStorage.getItem('sds_current_user');
-      return saved ? JSON.parse(saved) : null;
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && parsed.role) return parsed;
+      }
     } catch {
-      return null;
+      // ignore
     }
+    return DEFAULT_TEACHER_USER;
   });
+
+  const [isPinModalOpen, setIsPinModalOpen] = useState(false);
 
   // Active navigation tab
   const [activeTab, setActiveTab] = useState<ActiveTab>('dashboard');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  const isAdmin = currentUser?.role === 'ผู้ดูแลระบบ';
+
+  // For teachers, restrict accessible tabs to dashboard, studentReport, homeroom, and classRoster
+  useEffect(() => {
+    if (currentUser?.role === 'ครู') {
+      if (
+        activeTab !== 'dashboard' &&
+        activeTab !== 'studentReport' &&
+        activeTab !== 'homeroom' &&
+        activeTab !== 'classRoster'
+      ) {
+        setActiveTab('dashboard');
+      }
+    }
+  }, [currentUser?.role, activeTab]);
 
   // Data states
   const [settings, setSettings] = useState<SystemSetting>(DEFAULT_SETTINGS);
@@ -162,21 +191,37 @@ export default function App() {
     setActiveTab('dashboard');
   };
 
+  const handleAdminPinSuccess = (adminUser: AppUser) => {
+    setCurrentUser(adminUser);
+    try {
+      localStorage.setItem('sds_current_user', JSON.stringify(adminUser));
+    } catch {
+      // ignore
+    }
+    showToast('success', 'เข้าสู่ระบบสำเร็จด้วย PIN', 'สิทธิ์ผู้ดูแลระบบสูงสุด');
+    setIsPinModalOpen(false);
+  };
+
   const handleLogout = () => {
-    showConfirm(
-      'ยืนยันการออกจากระบบ',
-      'คุณต้องการออกจากระบบการจัดการฐานข้อมูลนักเรียนใช่หรือไม่?',
-      () => {
-        setCurrentUser(null);
-        try {
-          localStorage.removeItem('sds_current_user');
-        } catch {
-          // ignore
-        }
-        showToast('info', 'ออกจากระบบเรียบร้อยแล้ว');
-      },
-      false
-    );
+    if (isAdmin) {
+      showConfirm(
+        'ออกจากโหมดผู้ดูแลระบบ',
+        'คุณต้องการออกจากโหมดผู้ดูแลระบบและกลับสู่หน้าสำหรับครูใช่หรือไม่?',
+        () => {
+          setCurrentUser(DEFAULT_TEACHER_USER);
+          try {
+            localStorage.removeItem('sds_current_user');
+          } catch {
+            // ignore
+          }
+          setActiveTab('dashboard');
+          showToast('info', 'สลับกลับสู่หน้าสำหรับครูผู้สอนเรียบร้อยแล้ว');
+        },
+        false
+      );
+    } else {
+      showToast('info', 'คุณอยู่ในหน้าสำหรับครูผู้สอน');
+    }
   };
 
   // Handlers for Firestore actions
@@ -308,21 +353,7 @@ export default function App() {
     setHomeroomAssignments([]);
   };
 
-  // If user is not logged in, show the Login page with horizontal card and PIN numpad modal
-  if (!currentUser) {
-    return (
-      <>
-        <LoginView
-          settings={settings}
-          users={users}
-          onLoginSuccess={handleLoginSuccess}
-          showToast={showToast}
-        />
-        <SweetAlertModal confirmState={confirmConfig} onClose={() => setConfirmConfig(null)} />
-        <ToastNotification toast={toast} onDismiss={() => setToast(null)} />
-      </>
-    );
-  }
+
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col antialiased">
@@ -370,16 +401,32 @@ export default function App() {
           ) : (
             <>
               {activeTab === 'dashboard' && (
-                <DashboardView
+                <StudentReportView
+                  mode="dashboard"
                   students={students}
                   classrooms={classrooms}
                   academicYears={academicYears}
+                  assignments={homeroomAssignments}
                   settings={settings}
+                  showToast={showToast}
                   onNavigateTab={setActiveTab}
                 />
               )}
 
-              {activeTab === 'students' && (
+              {activeTab === 'studentReport' && (
+                <StudentReportView
+                  mode="report"
+                  students={students}
+                  classrooms={classrooms}
+                  academicYears={academicYears}
+                  assignments={homeroomAssignments}
+                  settings={settings}
+                  showToast={showToast}
+                  onNavigateTab={setActiveTab}
+                />
+              )}
+
+              {isAdmin && activeTab === 'students' && (
                 <StudentsView
                   students={students}
                   classrooms={classrooms}
@@ -404,17 +451,6 @@ export default function App() {
                 />
               )}
 
-              {activeTab === 'studentReport' && (
-                <StudentReportView
-                  students={students}
-                  classrooms={classrooms}
-                  academicYears={academicYears}
-                  assignments={homeroomAssignments}
-                  settings={settings}
-                  showToast={showToast}
-                />
-              )}
-
               {activeTab === 'homeroom' && (
                 <HomeroomView
                   assignments={homeroomAssignments}
@@ -429,7 +465,7 @@ export default function App() {
                 />
               )}
 
-              {activeTab === 'classrooms' && (
+              {isAdmin && activeTab === 'classrooms' && (
                 <ClassroomsView
                   classrooms={classrooms}
                   students={students}
@@ -442,7 +478,7 @@ export default function App() {
                 />
               )}
 
-              {activeTab === 'academicYears' && (
+              {isAdmin && activeTab === 'academicYears' && (
                 <AcademicYearsView
                   academicYears={academicYears}
                   onSave={handleSaveAcademicYear}
@@ -452,19 +488,7 @@ export default function App() {
                 />
               )}
 
-              {activeTab === 'users' && (
-                <UsersView
-                  users={users}
-                  onSave={handleSaveUser}
-                  onDelete={handleDeleteUser}
-                  onDeleteAll={handleDeleteAllUsers}
-                  onBatchSave={handleBatchSaveUsers}
-                  showToast={showToast}
-                  showConfirm={showConfirm}
-                />
-              )}
-
-              {activeTab === 'settings' && (
+              {isAdmin && activeTab === 'settings' && (
                 <SettingsView
                   settings={settings}
                   onSave={handleSaveSettings}
@@ -484,6 +508,29 @@ export default function App() {
 
       {/* Global Toast Notification */}
       <ToastNotification toast={toast} onDismiss={() => setToast(null)} />
+
+      {/* Floating Admin PIN Key Button at Bottom Right (ไอคอนรูปสัญลักษณ์กุญแจ สำหรับเข้าระบบผู้ดูแลระบบ) */}
+      {!isAdmin && (
+        <div className="fixed bottom-6 right-6 z-40 no-print">
+          <button
+            type="button"
+            onClick={() => setIsPinModalOpen(true)}
+            title="เข้าระบบผู้ดูแลระบบด้วย PIN 6 หลัก"
+            aria-label="เข้าระบบผู้ดูแลระบบด้วย PIN"
+            className="w-14 h-14 rounded-full bg-gradient-to-tr from-[#0C7C82] via-[#26A69A] to-[#35B4B0] text-white shadow-xl shadow-teal-900/30 hover:shadow-2xl hover:scale-110 active:scale-95 transition-all duration-300 cursor-pointer border-2 border-white/80 flex items-center justify-center group"
+          >
+            <KeyRound className="w-6 h-6 text-white group-hover:rotate-12 transition-transform duration-300 drop-shadow-xs" />
+          </button>
+        </div>
+      )}
+
+      {/* PIN Keypad Modal for Admin Entry */}
+      <PinNumpadModal
+        isOpen={isPinModalOpen}
+        onClose={() => setIsPinModalOpen(false)}
+        targetPin={settings.adminPin || '000000'}
+        onSuccess={handleAdminPinSuccess}
+      />
     </div>
   );
 }

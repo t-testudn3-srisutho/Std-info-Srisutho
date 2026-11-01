@@ -68,6 +68,17 @@ export const LoginView: React.FC<LoginViewProps> = ({
     }, 300);
   };
 
+  const handleTeacherDirectLogin = () => {
+    const teacherUser: AppUser = {
+      id: 'teacher_guest',
+      username: 'teacher',
+      fullName: 'ครูผู้สอน',
+      role: 'ครู',
+    };
+    showToast('success', 'เข้าสู่ระบบสำเร็จ', 'ยินดีต้อนรับสู่หน้าสำหรับครูผู้สอน');
+    onLoginSuccess(teacherUser);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0C7C82]/10 via-slate-100 to-[#35B4B0]/15 flex items-center justify-center p-4 relative">
       {/* Background Decorative Blur Blobs */}
@@ -133,14 +144,44 @@ export const LoginView: React.FC<LoginViewProps> = ({
 
         {/* Right Side: Horizontal Login Form */}
         <div className="md:w-1/2 p-8 md:p-10 flex flex-col justify-center bg-white">
-          <div className="mb-6">
+          <div className="mb-5">
             <h3 className="text-2xl font-bold text-slate-800">เข้าสู่ระบบ</h3>
             <p className="text-sm text-slate-500 mt-1">
-              สำหรับครูผู้สอนและผู้ดูแลระบบ (ระบบตรวจสอบบทบาทจากชื่อผู้ใช้โดยอัตโนมัติ)
+              สำหรับครูผู้สอนและผู้ดูแลระบบ
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Teacher Direct Quick Entry Button (ไม่มีการเข้าใช้งานด้วย user, password) */}
+          <div className="mb-5">
+            <button
+              type="button"
+              onClick={handleTeacherDirectLogin}
+              className="w-full p-3.5 rounded-2xl border-2 border-[#0C7C82] bg-gradient-to-r from-teal-50 via-emerald-50/50 to-teal-50/30 hover:from-teal-100/80 hover:to-teal-50 text-[#0C7C82] font-bold text-sm transition-all duration-200 shadow-xs hover:shadow-md flex items-center gap-3.5 cursor-pointer group hover:border-[#095f64]"
+            >
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#0C7C82] to-[#35B4B0] text-white flex items-center justify-center group-hover:scale-105 transition-transform shrink-0 shadow-sm">
+                <GraduationCap className="w-5 h-5" />
+              </div>
+              <div className="text-left flex-1">
+                <div className="text-sm font-bold text-[#0C7C82] group-hover:text-[#095f64] leading-tight flex items-center justify-between">
+                  <span>เข้าสู่หน้าสำหรับครู</span>
+                  <span className="text-[10px] bg-[#0C7C82] text-white px-2 py-0.5 rounded-full font-medium">คลิกเข้าใช้งานทันที</span>
+                </div>
+                <div className="text-[11px] text-teal-700/80 font-normal mt-0.5">
+                  ไม่ต้องกรอกรหัสผ่าน (แดชบอร์ด &amp; พิมพ์รายชื่อนักเรียน)
+                </div>
+              </div>
+            </button>
+          </div>
+
+          {/* Divider */}
+          <div className="relative my-3 flex items-center justify-center">
+            <div className="border-t border-slate-200 w-full" />
+            <span className="bg-white px-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wider absolute">
+              หรือเข้าสู่ระบบผู้ดูแลระบบ
+            </span>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-3.5">
             {/* Username Input */}
             <div>
               <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
@@ -200,7 +241,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
           </form>
 
           {/* Quick Notice */}
-          <div className="mt-6 pt-5 border-t border-slate-100 text-center">
+          <div className="mt-5 pt-4 border-t border-slate-100 text-center">
             <p className="text-xs text-slate-400">
               หรือคลิกไอคอนรูปกุญแจที่มุมล่างขวาเพื่อเข้าสู่ระบบด้วย PIN ผู้ดูแลระบบ
             </p>

@@ -627,8 +627,8 @@ export interface ClassSummaryReportRow {
   totalCount: number;
   malePct: string;
   femalePct: string;
-  disadvantagedCount: number;
-  cannotDischargeCount: number;
+  disadvantagedCount?: number;
+  cannotDischargeCount?: number;
 }
 
 export function exportStudentSummaryReportToExcel(
@@ -639,8 +639,6 @@ export function exportStudentSummaryReportToExcel(
     totalMale: number;
     totalFemale: number;
     grandTotal: number;
-    totalDisadvantaged: number;
-    totalCannotDischarge: number;
     totalClasses: number;
   }
 ) {
@@ -654,8 +652,6 @@ export function exportStudentSummaryReportToExcel(
     'รวมทั้งหมด (คน)': r.totalCount,
     'ร้อยละชาย (%)': r.malePct,
     'ร้อยละหญิง (%)': r.femalePct,
-    'ด้อยโอกาส (คน)': r.disadvantagedCount,
-    'ยังจำหน่ายไม่ได้ (คน)': r.cannotDischargeCount,
   }));
 
   // Append Grand Total row
@@ -669,8 +665,6 @@ export function exportStudentSummaryReportToExcel(
     'รวมทั้งหมด (คน)': totals.grandTotal,
     'ร้อยละชาย (%)': totals.grandTotal > 0 ? `${Math.round((totals.totalMale / totals.grandTotal) * 100)}%` : '0%',
     'ร้อยละหญิง (%)': totals.grandTotal > 0 ? `${Math.round((totals.totalFemale / totals.grandTotal) * 100)}%` : '0%',
-    'ด้อยโอกาส (คน)': totals.totalDisadvantaged,
-    'ยังจำหน่ายไม่ได้ (คน)': totals.totalCannotDischarge,
   });
 
   const ws = XLSX.utils.json_to_sheet(data);

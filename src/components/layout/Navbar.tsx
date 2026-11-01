@@ -9,6 +9,8 @@ import {
   LayoutDashboard,
   Users,
   Settings,
+  UserCheck,
+  BarChart3,
 } from 'lucide-react';
 import { AppUser, SystemSetting, AcademicYear, ActiveTab } from '../../types';
 
@@ -79,14 +81,16 @@ export const Navbar: React.FC<NavbarProps> = ({
             {currentUser?.fullName}
           </div>
 
-          {/* Logout Quick Button */}
-          <button
-            onClick={onLogout}
-            className="p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer"
-            title="ออกจากระบบ"
-          >
-            <LogOut className="w-4 h-4" />
-          </button>
+          {/* Logout Quick Button - Only visible in Admin Mode */}
+          {isAdmin && (
+            <button
+              onClick={onLogout}
+              className="p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer"
+              title="ออกจากโหมดผู้ดูแล"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+          )}
         </div>
       </header>
 
@@ -102,26 +106,24 @@ export const Navbar: React.FC<NavbarProps> = ({
           <span className="text-[10px]">แดชบอร์ด</span>
         </button>
 
-        {isAdmin && (
-          <button
-            onClick={() => onSelectTab('settings')}
-            className={`flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl transition cursor-pointer ${
-              activeTab === 'settings' ? 'text-[#0C7C82] font-bold bg-teal-50' : 'text-slate-500 hover:text-slate-800'
-            }`}
-          >
-            <Settings className="w-4 h-4" />
-            <span className="text-[10px]">ตั้งค่า</span>
-          </button>
-        )}
-
         <button
-          onClick={() => onSelectTab('students')}
+          onClick={() => onSelectTab('studentReport')}
           className={`flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl transition cursor-pointer ${
-            activeTab === 'students' ? 'text-[#0C7C82] font-bold bg-teal-50' : 'text-slate-500 hover:text-slate-800'
+            activeTab === 'studentReport' ? 'text-[#0C7C82] font-bold bg-teal-50' : 'text-slate-500 hover:text-slate-800'
           }`}
         >
-          <Users className="w-4 h-4" />
-          <span className="text-[10px]">นักเรียน</span>
+          <BarChart3 className="w-4 h-4" />
+          <span className="text-[10px]">รายงานสถิติ</span>
+        </button>
+
+        <button
+          onClick={() => onSelectTab('homeroom')}
+          className={`flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl transition cursor-pointer ${
+            activeTab === 'homeroom' ? 'text-[#0C7C82] font-bold bg-teal-50' : 'text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          <UserCheck className="w-4 h-4" />
+          <span className="text-[10px]">ครูประจำชั้น</span>
         </button>
 
         <button
@@ -131,7 +133,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           }`}
         >
           <GraduationCap className="w-4 h-4" />
-          <span className="text-[10px]">ทะเบียนห้อง</span>
+          <span className="text-[10px]">พิมพ์รายชื่อ</span>
         </button>
 
         <button
@@ -139,7 +141,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           className="flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl text-slate-500 hover:text-slate-800 transition cursor-pointer"
         >
           <Menu className="w-4 h-4" />
-          <span className="text-[10px]">เมนูทั้งหมด</span>
+          <span className="text-[10px]">เมนู</span>
         </button>
       </nav>
     </>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Shield, Delete, X, KeyRound, Check } from 'lucide-react';
+import { Shield, Delete, X } from 'lucide-react';
 import { AppUser } from '../../types';
 
 interface PinNumpadModalProps {
@@ -151,12 +151,6 @@ export const PinNumpadModal: React.FC<PinNumpadModalProps> = ({
           >
             <Delete className="w-5 h-5" />
           </button>
-        </div>
-
-        {/* Hint footer */}
-        <div className="bg-teal-50/70 border border-teal-100 rounded-xl p-2.5 text-xs text-teal-800 flex items-center justify-center gap-1.5">
-          <KeyRound className="w-3.5 h-3.5 shrink-0 text-[#0C7C82]" />
-          <span>ค่าเริ่มต้นสำหรับทดสอบ: <strong className="font-bold underline">000000</strong></span>
         </div>
       </div>
     </div>

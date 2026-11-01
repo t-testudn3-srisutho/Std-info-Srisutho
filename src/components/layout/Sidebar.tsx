@@ -1,18 +1,15 @@
 import React from 'react';
 import {
   LayoutDashboard,
+  BarChart3,
   Users,
   GraduationCap,
   UserCheck,
-  Building2,
   Calendar,
-  UserCog,
   Settings,
   LogOut,
   X,
-  Sparkles,
   School,
-  BarChart3,
 } from 'lucide-react';
 import { ActiveTab, AppUser, SystemSetting, AcademicYear } from '../../types';
 
@@ -45,59 +42,53 @@ export const Sidebar: React.FC<SidebarProps> = ({
       id: 'dashboard',
       label: 'แดชบอร์ด',
       icon: LayoutDashboard,
-      adminOnly: false,
+      teacherAllowed: true,
     },
     {
-      id: 'settings',
-      label: 'ตั้งค่าระบบ',
-      icon: Settings,
-      adminOnly: true,
-    },
-    {
-      id: 'academicYears',
-      label: 'จัดการปีการศึกษา',
-      icon: Calendar,
-      adminOnly: true,
-    },
-    {
-      id: 'users',
-      label: 'จัดการผู้ใช้งานระบบ',
-      icon: UserCog,
-      adminOnly: true,
-    },
-    {
-      id: 'classrooms',
-      label: 'จัดการชั้นเรียน',
-      icon: School,
-      adminOnly: true,
+      id: 'studentReport',
+      label: 'รายงานสถิติ',
+      icon: BarChart3,
+      teacherAllowed: true,
     },
     {
       id: 'homeroom',
       label: 'มอบหมายครูประจำชั้น',
       icon: UserCheck,
-      adminOnly: false,
+      teacherAllowed: true,
+    },
+    {
+      id: 'classRoster',
+      label: 'พิมพ์รายชื่อนักเรียน',
+      icon: GraduationCap,
+      teacherAllowed: true,
     },
     {
       id: 'students',
       label: 'จัดการข้อมูลนักเรียน',
       icon: Users,
-      adminOnly: false,
+      teacherAllowed: false,
     },
     {
-      id: 'classRoster',
-      label: 'รายชื่อนักเรียนตามชั้น',
-      icon: GraduationCap,
-      adminOnly: false,
+      id: 'classrooms',
+      label: 'จัดการชั้นเรียน',
+      icon: School,
+      teacherAllowed: false,
     },
     {
-      id: 'studentReport',
-      label: 'รายงานสรุปรายชั้น',
-      icon: BarChart3,
-      adminOnly: false,
+      id: 'academicYears',
+      label: 'จัดการปีการศึกษา',
+      icon: Calendar,
+      teacherAllowed: false,
+    },
+    {
+      id: 'settings',
+      label: 'ตั้งค่าระบบ',
+      icon: Settings,
+      teacherAllowed: false,
     },
   ];
 
-  const visibleItems = menuItems.filter(item => !item.adminOnly || isAdmin);
+  const visibleItems = menuItems.filter(item => isAdmin || item.teacherAllowed);
 
   return (
     <>
@@ -208,13 +199,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
           </div>
 
-          <button
-            onClick={onLogout}
-            className="w-full py-2 px-3 rounded-xl border border-rose-200 text-rose-600 hover:bg-rose-50 text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs"
-          >
-            <LogOut className="w-3.5 h-3.5" />
-            <span>ออกจากระบบ</span>
-          </button>
+          {isAdmin && (
+            <button
+              onClick={onLogout}
+              className="w-full py-2 px-3 rounded-xl border border-rose-200 text-rose-600 hover:bg-rose-50 text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span>ออกจากโหมดผู้ดูแล</span>
+            </button>
+          )}
         </div>
       </aside>
     </>
