@@ -11,6 +11,7 @@ import {
   GraduationCap,
 } from 'lucide-react';
 import { HomeroomAssignment, AppUser, Classroom, AcademicYear } from '../../types';
+import { compareClassrooms } from '../classrooms/ClassroomsView';
 
 interface HomeroomViewProps {
   assignments: HomeroomAssignment[];
@@ -48,6 +49,52 @@ export const HomeroomView: React.FC<HomeroomViewProps> = ({
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10; // Requirement: max 10 per page
 
+  // 1. Sort classrooms matching the admin's classroom management order
+  const sortedClassrooms = useMemo(() => {
+    const list = [...classrooms];
+    list.sort((a, b) => {
+      if (a.orderSeq && b.orderSeq && a.orderSeq !== b.orderSeq) {
+        return a.orderSeq - b.orderSeq;
+      }
+      return compareClassrooms(a, b);
+    });
+    return list;
+  }, [classrooms]);
+
+  // 2. Map each classroom to its exact index in the admin's sorted list
+  const classroomOrderMap = useMemo(() => {
+    const map = new Map<string, number>();
+    sortedClassrooms.forEach((c, idx) => {
+      map.set(`${c.className.trim()}_${c.room.trim()}`, idx);
+    });
+    return map;
+  }, [sortedClassrooms]);
+
+  // 3. Sort assignments matching the exact classroom order of the admin's classroom management
+  const sortedAssignments = useMemo(() => {
+    const list = [...assignments];
+    list.sort((a, b) => {
+      const keyA = `${a.className.trim()}_${a.room.trim()}`;
+      const keyB = `${b.className.trim()}_${b.room.trim()}`;
+      const orderA = classroomOrderMap.get(keyA);
+      const orderB = classroomOrderMap.get(keyB);
+
+      if (orderA !== undefined && orderB !== undefined && orderA !== orderB) {
+        return orderA - orderB;
+      }
+      if (orderA !== undefined && orderB === undefined) return -1;
+      if (orderA === undefined && orderB !== undefined) return 1;
+
+      // Fallback to standard classroom comparison
+      const cmp = compareClassrooms(a, b);
+      if (cmp !== 0) return cmp;
+
+      // If same room, sort by teacher name
+      return (a.teacherName || '').localeCompare(b.teacherName || '', 'th');
+    });
+    return list;
+  }, [assignments, classroomOrderMap]);
+
   // Existing teacher names list for quick autocompletion / datalist suggestions
   const existingTeacherNames = useMemo(() => {
     const set = new Set<string>();
@@ -59,17 +106,17 @@ export const HomeroomView: React.FC<HomeroomViewProps> = ({
 
   const currentYear = academicYears.find(y => y.isCurrent)?.year || '2567';
 
-  // Pagination calculation
-  const totalPages = Math.ceil(assignments.length / itemsPerPage) || 1;
+  // Pagination calculation based on sorted assignments
+  const totalPages = Math.ceil(sortedAssignments.length / itemsPerPage) || 1;
   const currentList = useMemo(() => {
     const start = (currentPage - 1) * itemsPerPage;
-    return assignments.slice(start, start + itemsPerPage);
-  }, [assignments, currentPage]);
+    return sortedAssignments.slice(start, start + itemsPerPage);
+  }, [sortedAssignments, currentPage]);
 
   const handleOpenAdd = () => {
     setEditingItem(null);
     setTeacherNameInput('');
-    const firstCls = classrooms[0];
+    const firstCls = sortedClassrooms[0];
     setSelectedClassId(firstCls ? `${firstCls.className}_${firstCls.room}` : '');
     setSelectedYear(currentYear);
     setModalOpen(true);
@@ -267,9 +314,9 @@ export const HomeroomView: React.FC<HomeroomViewProps> = ({
         {/* Pagination Bar (แสดงไม่เกิน 10 รายการ) */}
         <div className="p-4 border-t border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
           <div>
-            แสดง {assignments.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1} ถึง{' '}
-            {Math.min(currentPage * itemsPerPage, assignments.length)} จากทั้งหมด{' '}
-            <strong className="text-slate-800">{assignments.length}</strong> คน
+            แสดง {sortedAssignments.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1} ถึง{' '}
+            {Math.min(currentPage * itemsPerPage, sortedAssignments.length)} จากทั้งหมด{' '}
+            <strong className="text-slate-800">{sortedAssignments.length}</strong> คน
           </div>
 
           <div className="flex items-center gap-1">
@@ -360,7 +407,7 @@ export const HomeroomView: React.FC<HomeroomViewProps> = ({
                   className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:border-[#0C7C82] outline-hidden bg-white"
                   required
                 >
-                  {classrooms.map(c => (
+                  {sortedClassrooms.map(c => (
                     <option key={c.id} value={`${c.className}_${c.room}`}>
                       {c.className} ห้อง {c.room}
                     </option>

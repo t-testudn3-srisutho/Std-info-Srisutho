@@ -139,7 +139,7 @@ export default function App() {
         getHomeroomAssignments(),
       ]);
 
-      let activeClassrooms = cls;
+      let activeClassrooms = [...cls];
       if (activeClassrooms.length === 0 && std.length > 0) {
         const extractedMap = new Map<string, { className: string; room: string }>();
         std.forEach(s => {
@@ -160,6 +160,13 @@ export default function App() {
           }));
           batchSaveClassrooms(activeClassrooms).catch(console.warn);
         }
+      } else if (activeClassrooms.length > 0) {
+        activeClassrooms.sort((a, b) => {
+          if (a.orderSeq && b.orderSeq && a.orderSeq !== b.orderSeq) {
+            return a.orderSeq - b.orderSeq;
+          }
+          return compareClassrooms(a, b);
+        });
       }
 
       setSettings(stgs);
@@ -244,6 +251,12 @@ export default function App() {
   const handleSaveClassroom = async (item: Classroom) => {
     await saveClassroom(item);
     const cls = await getClassrooms();
+    cls.sort((a, b) => {
+      if (a.orderSeq && b.orderSeq && a.orderSeq !== b.orderSeq) {
+        return a.orderSeq - b.orderSeq;
+      }
+      return compareClassrooms(a, b);
+    });
     setClassrooms(cls);
   };
 
