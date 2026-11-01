@@ -107,16 +107,6 @@ export const Navbar: React.FC<NavbarProps> = ({
         </button>
 
         <button
-          onClick={() => onSelectTab('studentReport')}
-          className={`flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl transition cursor-pointer ${
-            activeTab === 'studentReport' ? 'text-[#0C7C82] font-bold bg-teal-50' : 'text-slate-500 hover:text-slate-800'
-          }`}
-        >
-          <BarChart3 className="w-4 h-4" />
-          <span className="text-[10px]">รายงานสถิติ</span>
-        </button>
-
-        <button
           onClick={() => onSelectTab('homeroom')}
           className={`flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl transition cursor-pointer ${
             activeTab === 'homeroom' ? 'text-[#0C7C82] font-bold bg-teal-50' : 'text-slate-500 hover:text-slate-800'
@@ -134,6 +124,16 @@ export const Navbar: React.FC<NavbarProps> = ({
         >
           <GraduationCap className="w-4 h-4" />
           <span className="text-[10px]">พิมพ์รายชื่อ</span>
+        </button>
+
+        <button
+          onClick={() => onSelectTab('studentReport')}
+          className={`flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl transition cursor-pointer ${
+            activeTab === 'studentReport' ? 'text-[#0C7C82] font-bold bg-teal-50' : 'text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          <BarChart3 className="w-4 h-4" />
+          <span className="text-[10px]">รายงานสถิติ</span>
         </button>
 
         <button

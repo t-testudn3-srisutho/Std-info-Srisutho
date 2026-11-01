@@ -45,12 +45,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
       teacherAllowed: true,
     },
     {
-      id: 'studentReport',
-      label: 'รายงานสถิติ',
-      icon: BarChart3,
-      teacherAllowed: true,
-    },
-    {
       id: 'homeroom',
       label: 'มอบหมายครูประจำชั้น',
       icon: UserCheck,
@@ -60,6 +54,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
       id: 'classRoster',
       label: 'พิมพ์รายชื่อนักเรียน',
       icon: GraduationCap,
+      teacherAllowed: true,
+    },
+    {
+      id: 'studentReport',
+      label: 'รายงานสถิติ',
+      icon: BarChart3,
       teacherAllowed: true,
     },
     {
