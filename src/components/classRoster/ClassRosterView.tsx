@@ -52,13 +52,32 @@ export const ClassRosterView: React.FC<ClassRosterViewProps> = ({
     return [parts[0] || '', parts[1] || ''];
   }, [selectedClassKey]);
 
-  // Find homeroom teacher for selected class
-  const homeroomTeacher = useMemo(() => {
-    const match = assignments.find(
+  // Find homeroom teacher(s) for selected class (support multiple teachers joined by comma)
+  const homeroomTeachers = useMemo(() => {
+    if (!currentClass || !currentRoom) return [];
+    const matched = assignments.filter(
       a => a.className === currentClass && a.room === currentRoom
     );
-    return match ? match.teacherName : '...................................................';
+    const names: string[] = [];
+    matched.forEach(m => {
+      if (m.teacherName && m.teacherName.trim()) {
+        const split = m.teacherName.split(/[,/،、]/).map(t => t.trim()).filter(Boolean);
+        if (split.length > 0) {
+          names.push(...split);
+        } else {
+          names.push(m.teacherName.trim());
+        }
+      }
+    });
+    return Array.from(new Set(names));
   }, [assignments, currentClass, currentRoom]);
+
+  const homeroomTeacher = useMemo(() => {
+    if (homeroomTeachers.length === 0) {
+      return '...................................................';
+    }
+    return homeroomTeachers.join(', ');
+  }, [homeroomTeachers]);
 
   // Filter students in this class and room
   const classStudents = useMemo(() => {
@@ -598,7 +617,7 @@ export const ClassRosterView: React.FC<ClassRosterViewProps> = ({
           <div className="font-bold text-black mt-1" style={{ fontSize: tableScale.subTitleFontSize }}>
             บัญชีรายชื่อนักเรียน.............................................................
           </div>
-          <div className="font-normal text-black mt-0.5 flex flex-wrap items-center justify-center gap-3" style={{ fontSize: tableScale.headerInfoFontSize }}>
+          <div className="font-normal text-black mt-0.5 flex flex-wrap items-center justify-center gap-x-5 gap-y-0.5" style={{ fontSize: tableScale.headerInfoFontSize }}>
             <span>
               ชั้น: <strong className="font-bold text-black">{currentClass || '-'}</strong>
             </span>
@@ -608,9 +627,9 @@ export const ClassRosterView: React.FC<ClassRosterViewProps> = ({
             <span>
               ปีการศึกษา: <strong className="font-bold text-black">{currentYear}</strong>
             </span>
-            <span>
-              ครูประจำชั้น: <strong className="font-bold text-black">{homeroomTeacher}</strong>
-            </span>
+          </div>
+          <div className="font-normal text-black" style={{ fontSize: tableScale.headerInfoFontSize }}>
+            ครูประจำชั้น: <strong className="font-bold text-black">{homeroomTeacher}</strong>
           </div>
           <div className="font-normal text-black" style={{ fontSize: tableScale.headerInfoFontSize }}>
             จำนวนนักเรียนทั้งหมด: <strong className="font-bold text-black">{classStudents.length}</strong> คน (ชาย: <strong className="font-bold text-black">{maleCount}</strong> คน, หญิง: <strong className="font-bold text-black">{femaleCount}</strong> คน)

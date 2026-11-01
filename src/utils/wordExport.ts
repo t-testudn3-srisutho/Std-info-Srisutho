@@ -285,7 +285,10 @@ export function exportClassRosterToWord(
           บัญชีรายชื่อนักเรียน.............................................................
         </div>
         <div class="subtitle" style="margin-top: 2px; font-size: ${docFontSize};">
-          ชั้น: <b>${meta.classLevel}</b> &nbsp;&nbsp;&nbsp; ห้อง: <b>${meta.room}</b> &nbsp;&nbsp;&nbsp; ปีการศึกษา: <b>${meta.academicYear}</b> &nbsp;&nbsp;&nbsp; ครูประจำชั้น: <b>${meta.teacherName || '...................................................'}</b>
+          ชั้น: <b>${meta.classLevel}</b> &nbsp;&nbsp;&nbsp; ห้อง: <b>${meta.room}</b> &nbsp;&nbsp;&nbsp; ปีการศึกษา: <b>${meta.academicYear}</b>
+        </div>
+        <div class="subtitle" style="margin-top: 2px; font-size: ${docFontSize};">
+          ครูประจำชั้น: <b>${meta.teacherName || '...................................................'}</b>
         </div>
         <div class="subtitle" style="margin-top: 2px; font-size: ${docFontSize};">
           จำนวนนักเรียนทั้งหมด: <b>${students.length}</b> คน (ชาย: <b>${maleCount}</b> คน, หญิง: <b>${femaleCount}</b> คน)

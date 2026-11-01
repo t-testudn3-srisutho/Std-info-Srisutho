@@ -526,7 +526,8 @@ export function exportClassRosterToExcel(
   const aoa: (string | number)[][] = [
     [meta.schoolName],
     ['บัญชีรายชื่อนักเรียน.............................................................'],
-    [`ชั้น: ${meta.classLevel}    ห้อง: ${meta.room}    ปีการศึกษา: ${meta.academicYear}    ครูประจำชั้น: ${meta.teacherName || '...................................................'}`],
+    [`ชั้น: ${meta.classLevel}    ห้อง: ${meta.room}    ปีการศึกษา: ${meta.academicYear}`],
+    [`ครูประจำชั้น: ${meta.teacherName || '...................................................'}`],
     [`จำนวนนักเรียนทั้งหมด: ${students.length} คน (ชาย: ${maleCount} คน, หญิง: ${femaleCount} คน)`],
     [],
     headerRow,
@@ -560,14 +561,14 @@ export function exportClassRosterToExcel(
 
   const merges: any[] = [];
   for (let c = 0; c < fixedColsCount; c++) {
-    merges.push({ s: { r: 5, c }, e: { r: 6, c } });
+    merges.push({ s: { r: 6, c }, e: { r: 7, c } });
   }
   const remarkColIndex = fixedColsCount + count;
-  merges.push({ s: { r: 5, c: remarkColIndex }, e: { r: 6, c: remarkColIndex } });
+  merges.push({ s: { r: 6, c: remarkColIndex }, e: { r: 7, c: remarkColIndex } });
   if (count > 1) {
-    merges.push({ s: { r: 5, c: fixedColsCount }, e: { r: 5, c: fixedColsCount + count - 1 } });
+    merges.push({ s: { r: 6, c: fixedColsCount }, e: { r: 6, c: fixedColsCount + count - 1 } });
   } else if (count === 1) {
-    merges.push({ s: { r: 5, c: fixedColsCount }, e: { r: 6, c: fixedColsCount } });
+    merges.push({ s: { r: 6, c: fixedColsCount }, e: { r: 7, c: fixedColsCount } });
   }
   ws['!merges'] = merges;
 
