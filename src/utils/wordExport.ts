@@ -86,7 +86,7 @@ export function exportClassRosterToWord(
   const maleCount = students.filter(s => s.gender === 'ชาย' || s.gender === 'ช').length;
   const femaleCount = students.filter(s => s.gender === 'หญิง' || s.gender === 'ญ').length;
 
-  const count = meta.blankColCount || 1;
+  const count = typeof meta.blankColCount === 'number' ? Math.min(15, Math.max(0, meta.blankColCount)) : 1;
 
   // Calculate active column count
   let activeInfoCols = 2; // ลำดับ + หมายเหตุ
@@ -153,7 +153,9 @@ export function exportClassRosterToWord(
   const infoTotalW = orderW + studentIdW + citizenIdW + fullNameW + birthDateW + guardianNameW + guardianCitizenIdW + remarksW;
 
   let blankPoolW: number;
-  if (infoTotalW <= 50) {
+  if (count <= 0) {
+    blankPoolW = 0;
+  } else if (infoTotalW <= 50) {
     blankPoolW = count === 1 ? 52 : Math.max(50, count * 5);
   } else if (infoTotalW <= 80) {
     blankPoolW = count === 1 ? 28 : Math.max(30, count * 3.8);
@@ -169,7 +171,7 @@ export function exportClassRosterToWord(
   const birthDatePct = (birthDateW / totalW) * 100;
   const guardianNamePct = (guardianNameW / totalW) * 100;
   const guardianCitizenIdPct = (guardianCitizenIdW / totalW) * 100;
-  const eachBlankPct = ((blankPoolW / count) / totalW) * 100;
+  const eachBlankPct = count > 0 ? ((blankPoolW / count) / totalW) * 100 : 0;
   const remarksPct = (remarksW / totalW) * 100;
 
   // Header columns (strictly single-line)

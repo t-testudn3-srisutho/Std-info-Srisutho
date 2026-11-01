@@ -111,7 +111,9 @@ export const ClassRosterView: React.FC<ClassRosterViewProps> = ({
 
     // Blank pool expands to fill remaining space
     let blankPoolW: number;
-    if (infoTotalW <= 50) {
+    if (blankColCount <= 0) {
+      blankPoolW = 0;
+    } else if (infoTotalW <= 50) {
       // Default / few fields: blank slots expand to absorb all remaining space up to remarks
       blankPoolW = blankColCount === 1 ? 52 : Math.max(50, blankColCount * 5);
     } else if (infoTotalW <= 80) {
@@ -122,7 +124,7 @@ export const ClassRosterView: React.FC<ClassRosterViewProps> = ({
     }
 
     const totalW = infoTotalW + blankPoolW;
-    const eachBlankW = blankPoolW / blankColCount;
+    const eachBlankW = blankColCount > 0 ? blankPoolW / blankColCount : 0;
 
     return {
       order: (orderW / totalW) * 100,
@@ -424,23 +426,84 @@ export const ClassRosterView: React.FC<ClassRosterViewProps> = ({
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs">
-          {/* Blank Check Columns Checkbox Selection */}
-          <div className="space-y-2 bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
-            <label className="font-bold text-slate-700 block">
-              จำนวนช่องว่างสำหรับเช็คชื่อ (ช่องเปล่า):
-            </label>
-            <div className="flex flex-wrap items-center gap-4 sm:gap-6">
-              {[1, 5, 10, 15].map(num => (
-                <label key={num} className="flex items-center gap-2 cursor-pointer font-medium text-slate-800">
-                  <input
-                    type="checkbox"
-                    checked={blankColCount === num}
-                    onChange={() => setBlankColCount(num)}
-                    className="rounded accent-[#0C7C82] w-4 h-4 cursor-pointer"
-                  />
-                  <span>{num} ช่อง</span>
+          {/* Blank Check Columns Numeric Input (Max 15) */}
+          <div className="space-y-2 bg-slate-50 p-3.5 rounded-2xl border border-slate-200 flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className="font-bold text-slate-700 block">
+                  จำนวนช่องว่างสำหรับเช็คชื่อ (ช่องเปล่า):
                 </label>
-              ))}
+                <span className="text-[11px] font-semibold text-teal-800 bg-teal-50 border border-teal-200 px-2 py-0.5 rounded-full">
+                  ไม่เกิน 15 ช่อง
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-500 mb-2">
+                ระบุจำนวนช่องว่างสำหรับติ๊กเช็คชื่อ (0 - 15 ช่อง) โดยระบบจะปรับขนาดตารางอัตโนมัติ
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2.5">
+              {/* Stepper with direct numeric input */}
+              <div className="flex items-center rounded-xl border border-slate-300 bg-white shadow-xs overflow-hidden focus-within:border-[#0C7C82] focus-within:ring-2 focus-within:ring-[#0C7C82]/20">
+                <button
+                  type="button"
+                  onClick={() => setBlankColCount(prev => Math.max(0, prev - 1))}
+                  disabled={blankColCount <= 0}
+                  className="w-8 h-8 flex items-center justify-center text-slate-600 hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer font-bold text-sm select-none"
+                  title="ลด 1 ช่อง"
+                >
+                  -
+                </button>
+                <input
+                  type="number"
+                  min={0}
+                  max={15}
+                  value={blankColCount}
+                  onChange={e => {
+                    const raw = e.target.value;
+                    if (raw === '') {
+                      setBlankColCount(0);
+                      return;
+                    }
+                    const val = parseInt(raw, 10);
+                    if (!isNaN(val)) {
+                      setBlankColCount(Math.min(15, Math.max(0, val)));
+                    }
+                  }}
+                  className="w-12 h-8 text-center font-bold text-slate-800 text-sm outline-hidden border-x border-slate-200 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  aria-label="จำนวนช่องว่างสำหรับเช็คชื่อ (0 - 15 ช่อง)"
+                />
+                <button
+                  type="button"
+                  onClick={() => setBlankColCount(prev => Math.min(15, prev + 1))}
+                  disabled={blankColCount >= 15}
+                  className="w-8 h-8 flex items-center justify-center text-slate-600 hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer font-bold text-sm select-none"
+                  title="เพิ่ม 1 ช่อง"
+                >
+                  +
+                </button>
+              </div>
+
+              <span className="text-xs font-semibold text-slate-700">ช่อง</span>
+
+              {/* Quick shortcut presets */}
+              <div className="flex items-center gap-1.5 ml-auto">
+                <span className="text-[11px] text-slate-400 hidden sm:inline">ลัด:</span>
+                {[0, 1, 5, 10, 15].map(num => (
+                  <button
+                    key={num}
+                    type="button"
+                    onClick={() => setBlankColCount(num)}
+                    className={`px-2 py-0.5 text-xs rounded-lg font-semibold transition cursor-pointer ${
+                      blankColCount === num
+                        ? 'bg-[#0C7C82] text-white shadow-xs'
+                        : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
+                    }`}
+                  >
+                    {num}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 

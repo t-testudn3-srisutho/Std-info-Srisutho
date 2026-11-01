@@ -508,7 +508,7 @@ export function exportClassRosterToExcel(
 ) {
   const maleCount = students.filter(s => s.gender === 'ชาย' || s.gender === 'ช').length;
   const femaleCount = students.filter(s => s.gender === 'หญิง' || s.gender === 'ญ').length;
-  const count = meta.blankColCount || 10;
+  const count = typeof meta.blankColCount === 'number' ? Math.min(15, Math.max(0, meta.blankColCount)) : 1;
 
   // Order: ลำดับ -> (รหัส) -> (เลขปชช) -> (ชื่อนักเรียน) -> (วันเกิด) -> (ผู้ปกครอง) -> (เลขปชชผู้ปกครอง) -> [ช่องเปล่า] -> หมายเหตุ
   const headerRow: (string | number)[] = ['ลำดับ'];
@@ -585,8 +585,8 @@ export function exportClassRosterToExcel(
 
   // Target standard A4 portrait width in Excel character units is ~95 wch
   const targetTotalWch = 95;
-  const availableForBlanks = Math.max(count * 3.5, targetTotalWch - infoTotalWch);
-  const eachBlankWch = Math.max(3.5, Math.round((availableForBlanks / count) * 10) / 10);
+  const availableForBlanks = count > 0 ? Math.max(count * 3.5, targetTotalWch - infoTotalWch) : 0;
+  const eachBlankWch = count > 0 ? Math.max(3.5, Math.round((availableForBlanks / count) * 10) / 10) : 0;
 
   const rawCols: { wch: number }[] = [{ wch: orderWch }];
   if (meta.showStudentId) rawCols.push({ wch: studentIdWch });
