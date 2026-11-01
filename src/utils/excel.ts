@@ -571,18 +571,43 @@ export function exportClassRosterToExcel(
   }
   ws['!merges'] = merges;
 
-  const cols = [{ wch: 8 }];
-  if (meta.showStudentId) cols.push({ wch: 15 });
-  if (meta.showCitizenId) cols.push({ wch: 20 });
-  if (meta.showFullName) cols.push({ wch: 30 });
-  if (meta.showBirthDate) cols.push({ wch: 16 });
-  if (meta.showGuardianName) cols.push({ wch: 25 });
-  if (meta.showGuardianCitizenId) cols.push({ wch: 20 });
+  // Dynamic column widths for Excel: blank columns expand equally and fill space between info and remarks
+  const orderWch = 6;
+  const studentIdWch = meta.showStudentId ? 11 : 0;
+  const citizenIdWch = meta.showCitizenId ? 17 : 0;
+  const fullNameWch = meta.showFullName ? (meta.showGuardianName ? 26 : 32) : 0;
+  const birthDateWch = meta.showBirthDate ? 13 : 0;
+  const guardianNameWch = meta.showGuardianName ? 24 : 0;
+  const guardianCitizenIdWch = meta.showGuardianCitizenId ? 17 : 0;
+  const remarksWch = 12;
+
+  const infoTotalWch = orderWch + studentIdWch + citizenIdWch + fullNameWch + birthDateWch + guardianNameWch + guardianCitizenIdWch + remarksWch;
+
+  // Target standard A4 portrait width in Excel character units is ~95 wch
+  const targetTotalWch = 95;
+  const availableForBlanks = Math.max(count * 3.5, targetTotalWch - infoTotalWch);
+  const eachBlankWch = Math.max(3.5, Math.round((availableForBlanks / count) * 10) / 10);
+
+  const rawCols: { wch: number }[] = [{ wch: orderWch }];
+  if (meta.showStudentId) rawCols.push({ wch: studentIdWch });
+  if (meta.showCitizenId) rawCols.push({ wch: citizenIdWch });
+  if (meta.showFullName) rawCols.push({ wch: fullNameWch });
+  if (meta.showBirthDate) rawCols.push({ wch: birthDateWch });
+  if (meta.showGuardianName) rawCols.push({ wch: guardianNameWch });
+  if (meta.showGuardianCitizenId) rawCols.push({ wch: guardianCitizenIdWch });
   for (let i = 0; i < count; i++) {
-    cols.push({ wch: count === 1 ? 35 : 4 });
+    rawCols.push({ wch: eachBlankWch });
   }
-  cols.push({ wch: 20 });
-  ws['!cols'] = cols;
+  rawCols.push({ wch: remarksWch });
+
+  // If total columns exceed target page width, scale down proportionally so rightmost column never falls off page
+  const actualSum = rawCols.reduce((sum, c) => sum + c.wch, 0);
+  if (actualSum > targetTotalWch) {
+    const scale = targetTotalWch / actualSum;
+    ws['!cols'] = rawCols.map(c => ({ wch: Math.max(3, Math.round(c.wch * scale * 10) / 10) }));
+  } else {
+    ws['!cols'] = rawCols;
+  }
 
   const wb = XLSX.utils.book_new();
   const sheetName = `${meta.classLevel}_ห้อง_${meta.room}`.substring(0, 31);

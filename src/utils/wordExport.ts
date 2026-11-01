@@ -87,53 +87,122 @@ export function exportClassRosterToWord(
   const femaleCount = students.filter(s => s.gender === 'หญิง' || s.gender === 'ญ').length;
 
   const count = meta.blankColCount || 1;
-  const isSingleWide = count === 1;
 
-  // Dynamic font and cell height scaling based on row count
-  const docFontSize = meta.fontSize || (students.length > 40 ? '9.5pt' : students.length > 32 ? '10.5pt' : students.length > 24 ? '11.5pt' : students.length > 18 ? '12.5pt' : '14pt');
-  const cellHeight = students.length > 35 ? '18px' : students.length > 25 ? '22px' : '26px';
-  const cellPadding = students.length > 35 ? '1px 2px' : '2px 3px';
+  // Calculate active column count
+  let activeInfoCols = 2; // ลำดับ + หมายเหตุ
+  if (meta.showStudentId) activeInfoCols++;
+  if (meta.showCitizenId) activeInfoCols++;
+  if (meta.showFullName) activeInfoCols++;
+  if (meta.showBirthDate) activeInfoCols++;
+  if (meta.showGuardianName) activeInfoCols++;
+  if (meta.showGuardianCitizenId) activeInfoCols++;
+  const totalCols = activeInfoCols + count;
 
-  // Header columns:
-  // Column sequence: ลำดับ -> (รหัส) -> (เลขปชช) -> (ชื่อนักเรียน) -> (วันเกิด) -> (ผู้ปกครอง) -> (เลขปชชผู้ปกครอง) -> [ช่องเปล่า] -> หมายเหตุ
-  let headerThs = `<th style="width: 35px; text-align: center;">ลำดับ</th>`;
-  if (meta.showStudentId) headerThs += `<th style="width: 70px; text-align: center;">รหัสนักเรียน</th>`;
-  if (meta.showCitizenId) headerThs += `<th style="width: 105px; text-align: center;">เลขประจำตัวประชาชน</th>`;
-  if (meta.showFullName) headerThs += `<th style="width: 140px; text-align: left;">ชื่อ - นามสกุล</th>`;
-  if (meta.showBirthDate) headerThs += `<th style="width: 90px; text-align: center;">วันเกิด</th>`;
-  if (meta.showGuardianName) headerThs += `<th style="width: 120px; text-align: left;">ชื่อผู้ปกครอง</th>`;
-  if (meta.showGuardianCitizenId) headerThs += `<th style="width: 105px; text-align: center;">เลขประชาชนผู้ปกครอง</th>`;
-
-  // Blank check columns
-  if (isSingleWide) {
-    headerThs += `<th style="min-width: 140px; border: 1px solid #000; padding: ${cellPadding}; text-align: center; font-size: ${docFontSize}; background-color: #f9f9f9; color: #000;"></th>`;
-  } else {
-    for (let i = 0; i < count; i++) {
-      headerThs += `<th style="width: 20px; min-width: 20px; max-width: 20px; border: 1px solid #000; padding: ${cellPadding}; text-align: center; font-size: ${docFontSize}; background-color: #f9f9f9; color: #000;"></th>`;
-    }
+  // 1. Column count scaling (Horizontal overflow prevention)
+  let colFontNum = 14;
+  let cellPadding = '2px 3px';
+  if (totalCols > 20) {
+    colFontNum = 7.5;
+    cellPadding = '1px 1px';
+  } else if (totalCols > 16) {
+    colFontNum = 8.5;
+    cellPadding = '1px 2px';
+  } else if (totalCols > 12) {
+    colFontNum = 9.5;
+    cellPadding = '1.5px 2px';
+  } else if (totalCols > 8) {
+    colFontNum = 11;
+    cellPadding = '2px 2.5px';
+  } else if (totalCols > 5) {
+    colFontNum = 12.5;
+    cellPadding = '2px 3px';
   }
 
-  headerThs += `<th style="width: 70px; text-align: center;">หมายเหตุ</th>`;
+  // 2. Row count scaling (Vertical overflow prevention on A4)
+  let rowFontNum = 14;
+  let cellHeight = '24px';
+  if (students.length > 40) {
+    rowFontNum = 9.5;
+    cellHeight = '16px';
+    cellPadding = '1px 1.5px';
+  } else if (students.length > 32) {
+    rowFontNum = 10.5;
+    cellHeight = '18px';
+    cellPadding = '1.5px 2px';
+  } else if (students.length > 24) {
+    rowFontNum = 11.5;
+    cellHeight = '20px';
+  } else if (students.length > 18) {
+    rowFontNum = 12.5;
+    cellHeight = '22px';
+  }
+
+  const effectiveFontSizeNum = Math.min(rowFontNum, colFontNum);
+  const docFontSize = meta.fontSize || `${effectiveFontSizeNum}pt`;
+
+  // Calculate exact percentage weights so total is strictly 100%
+  const orderW = 4.5;
+  const studentIdW = meta.showStudentId ? 8.5 : 0;
+  const citizenIdW = meta.showCitizenId ? 14.5 : 0;
+  const fullNameW = meta.showFullName ? (meta.showGuardianName ? 24 : 33) : 0;
+  const birthDateW = meta.showBirthDate ? 11 : 0;
+  const guardianNameW = meta.showGuardianName ? 23 : 0;
+  const guardianCitizenIdW = meta.showGuardianCitizenId ? 14.5 : 0;
+  const remarksW = 9.5;
+
+  const infoTotalW = orderW + studentIdW + citizenIdW + fullNameW + birthDateW + guardianNameW + guardianCitizenIdW + remarksW;
+
+  let blankPoolW: number;
+  if (infoTotalW <= 50) {
+    blankPoolW = count === 1 ? 52 : Math.max(50, count * 5);
+  } else if (infoTotalW <= 80) {
+    blankPoolW = count === 1 ? 28 : Math.max(30, count * 3.8);
+  } else {
+    blankPoolW = count === 1 ? 16 : Math.max(22, count * 2.5);
+  }
+
+  const totalW = infoTotalW + blankPoolW;
+  const orderPct = (orderW / totalW) * 100;
+  const studentIdPct = (studentIdW / totalW) * 100;
+  const citizenIdPct = (citizenIdW / totalW) * 100;
+  const fullNamePct = (fullNameW / totalW) * 100;
+  const birthDatePct = (birthDateW / totalW) * 100;
+  const guardianNamePct = (guardianNameW / totalW) * 100;
+  const guardianCitizenIdPct = (guardianCitizenIdW / totalW) * 100;
+  const eachBlankPct = ((blankPoolW / count) / totalW) * 100;
+  const remarksPct = (remarksW / totalW) * 100;
+
+  // Header columns (strictly single-line)
+  let headerThs = `<th style="border: 1px solid #000; padding: ${cellPadding}; text-align: center; font-size: ${docFontSize}; background-color: #f2f2f2; color: #000; white-space: nowrap; overflow: hidden;">ลำดับ</th>`;
+  if (meta.showStudentId) headerThs += `<th style="border: 1px solid #000; padding: ${cellPadding}; text-align: center; font-size: ${docFontSize}; background-color: #f2f2f2; color: #000; white-space: nowrap; overflow: hidden;">รหัสนักเรียน</th>`;
+  if (meta.showCitizenId) headerThs += `<th style="border: 1px solid #000; padding: ${cellPadding}; text-align: center; font-size: ${docFontSize}; background-color: #f2f2f2; color: #000; white-space: nowrap; overflow: hidden;">เลขประจำตัวประชาชน</th>`;
+  if (meta.showFullName) headerThs += `<th style="border: 1px solid #000; padding: ${cellPadding}; text-align: left; font-size: ${docFontSize}; background-color: #f2f2f2; color: #000; white-space: nowrap; overflow: hidden;">ชื่อ - นามสกุล</th>`;
+  if (meta.showBirthDate) headerThs += `<th style="border: 1px solid #000; padding: ${cellPadding}; text-align: center; font-size: ${docFontSize}; background-color: #f2f2f2; color: #000; white-space: nowrap; overflow: hidden;">วันเกิด</th>`;
+  if (meta.showGuardianName) headerThs += `<th style="border: 1px solid #000; padding: ${cellPadding}; text-align: left; font-size: ${docFontSize}; background-color: #f2f2f2; color: #000; white-space: nowrap; overflow: hidden;">ชื่อผู้ปกครอง</th>`;
+  if (meta.showGuardianCitizenId) headerThs += `<th style="border: 1px solid #000; padding: ${cellPadding}; text-align: center; font-size: ${docFontSize}; background-color: #f2f2f2; color: #000; white-space: nowrap; overflow: hidden;">เลขประชาชนผู้ปกครอง</th>`;
+
+  // Blank check columns - each expands equally
+  for (let i = 0; i < count; i++) {
+    headerThs += `<th style="border: 1px solid #000; padding: ${cellPadding}; text-align: center; font-size: ${docFontSize}; background-color: #f9f9f9; color: #000; white-space: nowrap;"></th>`;
+  }
+
+  headerThs += `<th style="border: 1px solid #000; padding: ${cellPadding}; text-align: center; font-size: ${docFontSize}; background-color: #f2f2f2; color: #000; white-space: nowrap; overflow: hidden;">หมายเหตุ</th>`;
 
   const rows = students.map((s, idx) => {
-    let rowTds = `<td style="border: 1px solid #000; text-align: center; padding: ${cellPadding}; font-size: ${docFontSize}; margin: 0; font-weight: normal; color: #000;">${idx + 1}</td>`;
-    if (meta.showStudentId) rowTds += `<td style="border: 1px solid #000; text-align: center; padding: ${cellPadding}; font-size: ${docFontSize}; margin: 0; font-weight: normal; color: #000;">${s.studentId}</td>`;
-    if (meta.showCitizenId) rowTds += `<td style="border: 1px solid #000; text-align: center; padding: ${cellPadding}; font-size: ${docFontSize}; margin: 0; font-weight: normal; color: #000;">${s.citizenId || '-'}</td>`;
-    if (meta.showFullName) rowTds += `<td style="border: 1px solid #000; padding: ${cellPadding}; font-size: ${docFontSize}; white-space: nowrap; margin: 0; font-weight: normal; color: #000;">${s.prefix}${s.firstName} ${s.lastName}</td>`;
-    if (meta.showBirthDate) rowTds += `<td style="border: 1px solid #000; text-align: center; padding: ${cellPadding}; font-size: ${docFontSize}; white-space: nowrap; margin: 0; font-weight: normal; color: #000;">${formatThaiBirthDate(s.birthDate)}</td>`;
-    if (meta.showGuardianName) rowTds += `<td style="border: 1px solid #000; padding: ${cellPadding}; font-size: ${docFontSize}; white-space: nowrap; margin: 0; font-weight: normal; color: #000;">${s.guardianPrefix || ''}${s.guardianFirstName || ''} ${s.guardianLastName || ''}</td>`;
-    if (meta.showGuardianCitizenId) rowTds += `<td style="border: 1px solid #000; text-align: center; padding: ${cellPadding}; font-size: ${docFontSize}; margin: 0; font-weight: normal; color: #000;">${s.guardianCitizenId || '-'}</td>`;
+    let rowTds = `<td style="border: 1px solid #000; text-align: center; padding: ${cellPadding}; font-size: ${docFontSize}; margin: 0; font-weight: normal; color: #000; white-space: nowrap; overflow: hidden;">${idx + 1}</td>`;
+    if (meta.showStudentId) rowTds += `<td style="border: 1px solid #000; text-align: center; padding: ${cellPadding}; font-size: ${docFontSize}; margin: 0; font-weight: normal; color: #000; white-space: nowrap; overflow: hidden;">${s.studentId}</td>`;
+    if (meta.showCitizenId) rowTds += `<td style="border: 1px solid #000; text-align: center; padding: ${cellPadding}; font-size: ${docFontSize}; margin: 0; font-weight: normal; color: #000; white-space: nowrap; overflow: hidden;">${s.citizenId || '-'}</td>`;
+    if (meta.showFullName) rowTds += `<td style="border: 1px solid #000; text-align: left; padding: ${cellPadding}; font-size: ${docFontSize}; margin: 0; font-weight: normal; color: #000; white-space: nowrap; overflow: hidden;">${s.prefix}${s.firstName} ${s.lastName}</td>`;
+    if (meta.showBirthDate) rowTds += `<td style="border: 1px solid #000; text-align: center; padding: ${cellPadding}; font-size: ${docFontSize}; margin: 0; font-weight: normal; color: #000; white-space: nowrap; overflow: hidden;">${formatThaiBirthDate(s.birthDate)}</td>`;
+    if (meta.showGuardianName) rowTds += `<td style="border: 1px solid #000; text-align: left; padding: ${cellPadding}; font-size: ${docFontSize}; margin: 0; font-weight: normal; color: #000; white-space: nowrap; overflow: hidden;">${s.guardianPrefix || ''}${s.guardianFirstName || ''} ${s.guardianLastName || ''}</td>`;
+    if (meta.showGuardianCitizenId) rowTds += `<td style="border: 1px solid #000; text-align: center; padding: ${cellPadding}; font-size: ${docFontSize}; margin: 0; font-weight: normal; color: #000; white-space: nowrap; overflow: hidden;">${s.guardianCitizenId || '-'}</td>`;
 
-    // Blank column(s) - left side touches student name, right side touches remarks
-    if (isSingleWide) {
-      rowTds += `<td style="min-width: 140px; border: 1px solid #000; height: ${cellHeight}; padding: 0; margin: 0;"></td>`;
-    } else {
-      for (let i = 0; i < count; i++) {
-        rowTds += `<td style="width: 20px; min-width: 20px; max-width: 20px; border: 1px solid #000; height: ${cellHeight}; padding: 0; margin: 0;"></td>`;
-      }
+    // Blank column(s) - all expanding equally, contiguous between info and remarks
+    for (let i = 0; i < count; i++) {
+      rowTds += `<td style="border: 1px solid #000; height: ${cellHeight}; padding: 0; margin: 0; background-color: #ffffff;"></td>`;
     }
 
-    rowTds += `<td style="border: 1px solid #000; padding: ${cellPadding}; font-size: ${docFontSize}; text-align: center; margin: 0; font-weight: normal; color: #000;">${s.cannotDischarge ? 'ยังไม่จำหน่าย' : ''}</td>`;
+    rowTds += `<td style="border: 1px solid #000; padding: ${cellPadding}; font-size: ${docFontSize}; text-align: center; margin: 0; font-weight: normal; color: #000; white-space: nowrap; overflow: hidden;">${s.cannotDischarge ? 'ยังไม่จำหน่าย' : ''}</td>`;
 
     return `<tr>${rowTds}</tr>`;
   }).join('');
@@ -147,10 +216,10 @@ export function exportClassRosterToWord(
       <style>
         @page {
           size: A4 portrait;
-          margin-top: 1cm;
-          margin-bottom: 1cm;
-          margin-left: 1cm;
-          margin-right: 1cm;
+          margin-top: 0.8cm;
+          margin-bottom: 0.8cm;
+          margin-left: 0.8cm;
+          margin-right: 0.8cm;
         }
         body {
           font-family: 'Sarabun', 'TH Sarabun New', sans-serif;
@@ -184,6 +253,7 @@ export function exportClassRosterToWord(
         }
         table {
           width: 100%;
+          table-layout: fixed;
           border-collapse: collapse;
           margin-top: 3px;
           font-size: ${docFontSize};
@@ -196,6 +266,7 @@ export function exportClassRosterToWord(
           font-size: ${docFontSize};
           color: #000;
           font-weight: normal;
+          overflow: hidden;
         }
         th {
           background-color: #f2f2f2;
@@ -208,18 +279,29 @@ export function exportClassRosterToWord(
     <body>
       <div class="header">
         <div class="title">${meta.schoolName}</div>
-        <div class="subtitle" style="font-weight: bold; font-size: 14pt; margin-top: 2px;">
+        <div class="subtitle" style="font-weight: bold; font-size: 13.5pt; margin-top: 2px;">
           บัญชีรายชื่อนักเรียน.............................................................
         </div>
-        <div class="subtitle" style="margin-top: 2px; font-size: 14pt;">
+        <div class="subtitle" style="margin-top: 2px; font-size: ${docFontSize};">
           ชั้น: <b>${meta.classLevel}</b> &nbsp;&nbsp;&nbsp; ห้อง: <b>${meta.room}</b> &nbsp;&nbsp;&nbsp; ปีการศึกษา: <b>${meta.academicYear}</b> &nbsp;&nbsp;&nbsp; ครูประจำชั้น: <b>${meta.teacherName || '...................................................'}</b>
         </div>
-        <div class="subtitle" style="margin-top: 2px; font-size: 14pt;">
+        <div class="subtitle" style="margin-top: 2px; font-size: ${docFontSize};">
           จำนวนนักเรียนทั้งหมด: <b>${students.length}</b> คน (ชาย: <b>${maleCount}</b> คน, หญิง: <b>${femaleCount}</b> คน)
         </div>
       </div>
 
       <table>
+        <colgroup>
+          <col style="width: ${orderPct.toFixed(2)}%;" />
+          ${meta.showStudentId ? `<col style="width: ${studentIdPct.toFixed(2)}%;" />` : ''}
+          ${meta.showCitizenId ? `<col style="width: ${citizenIdPct.toFixed(2)}%;" />` : ''}
+          ${meta.showFullName ? `<col style="width: ${fullNamePct.toFixed(2)}%;" />` : ''}
+          ${meta.showBirthDate ? `<col style="width: ${birthDatePct.toFixed(2)}%;" />` : ''}
+          ${meta.showGuardianName ? `<col style="width: ${guardianNamePct.toFixed(2)}%;" />` : ''}
+          ${meta.showGuardianCitizenId ? `<col style="width: ${guardianCitizenIdPct.toFixed(2)}%;" />` : ''}
+          ${Array.from({ length: count }, () => `<col style="width: ${eachBlankPct.toFixed(2)}%;" />`).join('')}
+          <col style="width: ${remarksPct.toFixed(2)}%;" />
+        </colgroup>
         <thead>
           <tr>
             ${headerThs}

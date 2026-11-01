@@ -94,81 +94,217 @@ export const ClassRosterView: React.FC<ClassRosterViewProps> = ({
     return count;
   }, [showStudentId, showCitizenId, showFullName, showBirthDate, showGuardianName, showGuardianCitizenId, blankColCount]);
 
-  // Dynamic scaling based on student row count and active columns to fit A4 page perfectly
+  // Proportional column widths ensuring blank slots automatically expand and share equal width
+  // without compressing student/guardian names or causing ellipses (...)
+  const columnWidths = useMemo(() => {
+    const orderW = 4.5;
+    const studentIdW = showStudentId ? 8.5 : 0;
+    const citizenIdW = showCitizenId ? 14.5 : 0;
+    // When fewer fields are selected, give student name generous space (34%) so it never truncates
+    const fullNameW = showFullName ? (showGuardianName ? 24 : 33) : 0;
+    const birthDateW = showBirthDate ? 11 : 0;
+    const guardianNameW = showGuardianName ? 23 : 0;
+    const guardianCitizenIdW = showGuardianCitizenId ? 14.5 : 0;
+    const remarksW = 9.5;
+
+    const infoTotalW = orderW + studentIdW + citizenIdW + fullNameW + birthDateW + guardianNameW + guardianCitizenIdW + remarksW;
+
+    // Blank pool expands to fill remaining space
+    let blankPoolW: number;
+    if (infoTotalW <= 50) {
+      // Default / few fields: blank slots expand to absorb all remaining space up to remarks
+      blankPoolW = blankColCount === 1 ? 52 : Math.max(50, blankColCount * 5);
+    } else if (infoTotalW <= 80) {
+      blankPoolW = blankColCount === 1 ? 28 : Math.max(30, blankColCount * 3.8);
+    } else {
+      // Many student fields active -> balanced allocation
+      blankPoolW = blankColCount === 1 ? 16 : Math.max(22, blankColCount * 2.5);
+    }
+
+    const totalW = infoTotalW + blankPoolW;
+    const eachBlankW = blankPoolW / blankColCount;
+
+    return {
+      order: (orderW / totalW) * 100,
+      studentId: (studentIdW / totalW) * 100,
+      citizenId: (citizenIdW / totalW) * 100,
+      fullName: (fullNameW / totalW) * 100,
+      birthDate: (birthDateW / totalW) * 100,
+      guardianName: (guardianNameW / totalW) * 100,
+      guardianCitizenId: (guardianCitizenIdW / totalW) * 100,
+      eachBlank: (eachBlankW / totalW) * 100,
+      remarks: (remarksW / totalW) * 100,
+    };
+  }, [showStudentId, showCitizenId, showFullName, showBirthDate, showGuardianName, showGuardianCitizenId, blankColCount]);
+
+  // Measure max text lengths in active classroom to adjust cell font sizes accurately
+  const maxLengths = useMemo(() => {
+    let maxName = 14;
+    let maxGuardian = 12;
+    let maxStudentId = 5;
+    let maxCitizen = 13;
+    let maxGuardianCitizen = 13;
+
+    classStudents.forEach(s => {
+      const name = `${s.prefix || ''}${s.firstName || ''} ${s.lastName || ''}`.trim();
+      if (name.length > maxName) maxName = name.length;
+
+      const gName = `${s.guardianPrefix || ''}${s.guardianFirstName || ''} ${s.guardianLastName || ''}`.trim();
+      if (gName.length > maxGuardian) maxGuardian = gName.length;
+
+      if (s.studentId && s.studentId.length > maxStudentId) maxStudentId = s.studentId.length;
+      if (s.citizenId && s.citizenId.length > maxCitizen) maxCitizen = s.citizenId.length;
+      if (s.guardianCitizenId && s.guardianCitizenId.length > maxGuardianCitizen) maxGuardianCitizen = s.guardianCitizenId.length;
+    });
+
+    return { maxName, maxGuardian, maxStudentId, maxCitizen, maxGuardianCitizen };
+  }, [classStudents]);
+
+  // Dynamic scaling based on student row count and active columns to fit A4 page perfectly without right-edge overflow
+  // and guarantee strict single-line text in every cell
   const tableScale = useMemo(() => {
     const rowCount = classStudents.length;
 
-    let fontSizeNum = 14;
-    let headerFontSizeNum = 14;
-    let titleFontSizeNum = 14;
-    let subTitleFontSizeNum = 13;
-    let headerInfoFontSizeNum = 12;
-    let cellPaddingY = 'py-1';
+    // 1. Column count scaling (Horizontal overflow prevention)
+    let colFontNum = 13;
+    let colHeaderFontNum = 13;
     let cellPaddingX = 'px-1.5';
+    let cellPaddingY = 'py-1';
+
+    if (totalColSpan > 20) {
+      colFontNum = 6.5;
+      colHeaderFontNum = 6.5;
+      cellPaddingX = 'px-[2px]';
+      cellPaddingY = 'py-[2px]';
+    } else if (totalColSpan > 16) {
+      colFontNum = 7.5;
+      colHeaderFontNum = 7.5;
+      cellPaddingX = 'px-[2px]';
+      cellPaddingY = 'py-0.5';
+    } else if (totalColSpan > 12) {
+      colFontNum = 8.5;
+      colHeaderFontNum = 9;
+      cellPaddingX = 'px-1';
+      cellPaddingY = 'py-0.5';
+    } else if (totalColSpan > 8) {
+      colFontNum = 10;
+      colHeaderFontNum = 10.5;
+      cellPaddingX = 'px-1';
+      cellPaddingY = 'py-0.5';
+    } else if (totalColSpan > 5) {
+      colFontNum = 11.5;
+      colHeaderFontNum = 12;
+      cellPaddingX = 'px-1.5';
+      cellPaddingY = 'py-1';
+    }
+
+    // 2. Row count scaling (Vertical overflow prevention on A4)
+    let rowFontNum = 13.5;
+    let rowHeaderFontNum = 13.5;
+    let rowTitleFontNum = 13.5;
+    let rowSubTitleFontNum = 12.5;
+    let rowHeaderInfoFontNum = 12;
     let rowHeightClass = 'h-7';
 
-    // Vertical Scaling based on row count
     if (rowCount > 40) {
-      fontSizeNum = 9.5;
-      headerFontSizeNum = 10;
-      titleFontSizeNum = 12;
-      subTitleFontSizeNum = 11;
-      headerInfoFontSizeNum = 10;
-      cellPaddingY = 'py-0.5';
-      cellPaddingX = 'px-0.5';
+      rowFontNum = 9;
+      rowHeaderFontNum = 9.5;
+      rowTitleFontNum = 11;
+      rowSubTitleFontNum = 10;
+      rowHeaderInfoFontNum = 9.5;
       rowHeightClass = 'h-4.5';
+      cellPaddingY = 'py-0.5';
     } else if (rowCount > 32) {
-      fontSizeNum = 10.5;
-      headerFontSizeNum = 11;
-      titleFontSizeNum = 12.5;
-      subTitleFontSizeNum = 11.5;
-      headerInfoFontSizeNum = 10.5;
-      cellPaddingY = 'py-0.5';
-      cellPaddingX = 'px-1';
+      rowFontNum = 10;
+      rowHeaderFontNum = 10.5;
+      rowTitleFontNum = 11.5;
+      rowSubTitleFontNum = 10.5;
+      rowHeaderInfoFontNum = 10;
       rowHeightClass = 'h-5';
-    } else if (rowCount > 24) {
-      fontSizeNum = 11.5;
-      headerFontSizeNum = 12;
-      titleFontSizeNum = 13;
-      subTitleFontSizeNum = 12;
-      headerInfoFontSizeNum = 11.5;
       cellPaddingY = 'py-0.5';
-      cellPaddingX = 'px-1';
+    } else if (rowCount > 24) {
+      rowFontNum = 11;
+      rowHeaderFontNum = 11.5;
+      rowTitleFontNum = 12.5;
+      rowSubTitleFontNum = 11.5;
+      rowHeaderInfoFontNum = 11;
       rowHeightClass = 'h-5.5';
+      cellPaddingY = 'py-0.5';
     } else if (rowCount > 18) {
-      fontSizeNum = 12.5;
-      headerFontSizeNum = 13;
-      titleFontSizeNum = 13.5;
-      subTitleFontSizeNum = 12.5;
-      headerInfoFontSizeNum = 12;
-      cellPaddingY = 'py-1';
-      cellPaddingX = 'px-1.5';
+      rowFontNum = 12;
+      rowHeaderFontNum = 12.5;
+      rowTitleFontNum = 13;
+      rowSubTitleFontNum = 12;
+      rowHeaderInfoFontNum = 11.5;
       rowHeightClass = 'h-6';
     }
 
-    // Horizontal Scaling if many columns are enabled
-    if (totalColSpan > 14) {
-      fontSizeNum = Math.min(fontSizeNum, 10);
-      headerFontSizeNum = Math.min(headerFontSizeNum, 10);
-      cellPaddingX = 'px-0.5';
-    } else if (totalColSpan > 10) {
-      fontSizeNum = Math.min(fontSizeNum, 11.5);
-      headerFontSizeNum = Math.min(headerFontSizeNum, 11.5);
-      cellPaddingX = 'px-1';
-    }
+    // Combine both dimensions: take minimum font so neither axis overflows
+    const baseFontSizeNum = Math.min(rowFontNum, colFontNum);
+    const baseHeaderFontSizeNum = Math.min(rowHeaderFontNum, colHeaderFontNum);
+    const titleFontSizeNum = Math.min(rowTitleFontNum, Math.max(10, baseFontSizeNum + 1.5));
+    const subTitleFontSizeNum = Math.min(rowSubTitleFontNum, Math.max(9.5, baseFontSizeNum + 0.5));
+    const headerInfoFontSizeNum = Math.min(rowHeaderInfoFontNum, Math.max(9, baseFontSizeNum));
+
+    // A4 printable width is approx 550pt (194mm printable area with 8mm margins)
+    const printableWidthPt = 550;
+    const paddingPt = totalColSpan > 16 ? 2 : totalColSpan > 10 ? 3 : 5;
+
+    // Helper to calculate maximum fitting font size for single-line text without overflow or wrapping
+    const calcFitFont = (colPct: number, charCount: number, isDigit = false): number => {
+      if (colPct <= 0 || charCount <= 0) return baseFontSizeNum;
+      const cellWidthPt = printableWidthPt * (colPct / 100);
+      const netWidthPt = Math.max(8, cellWidthPt - paddingPt);
+      const charWidthFactor = isDigit ? 0.52 : 0.48;
+      const fit = (netWidthPt * 0.94) / (charCount * charWidthFactor);
+      return Math.max(5, Math.min(baseFontSizeNum, Math.round(fit * 10) / 10));
+    };
+
+    const calcHeaderFitFont = (colPct: number, headerText: string): number => {
+      if (colPct <= 0 || !headerText) return baseHeaderFontSizeNum;
+      const cellWidthPt = printableWidthPt * (colPct / 100);
+      const netWidthPt = Math.max(8, cellWidthPt - paddingPt);
+      const fit = (netWidthPt * 0.94) / (headerText.length * 0.47);
+      return Math.max(5, Math.min(baseHeaderFontSizeNum, Math.round(fit * 10) / 10));
+    };
+
+    // Specific font sizes for columns to strictly guarantee single line without overflow
+    const colFonts = {
+      order: `${calcFitFont(columnWidths.order, 3, true)}pt`,
+      studentId: `${calcFitFont(columnWidths.studentId, maxLengths.maxStudentId, true)}pt`,
+      citizenId: `${calcFitFont(columnWidths.citizenId, maxLengths.maxCitizen, true)}pt`,
+      fullName: `${calcFitFont(columnWidths.fullName, maxLengths.maxName, false)}pt`,
+      birthDate: `${calcFitFont(columnWidths.birthDate, 12, false)}pt`,
+      guardianName: `${calcFitFont(columnWidths.guardianName, maxLengths.maxGuardian, false)}pt`,
+      guardianCitizenId: `${calcFitFont(columnWidths.guardianCitizenId, maxLengths.maxGuardianCitizen, true)}pt`,
+      remarks: `${calcFitFont(columnWidths.remarks, 13, false)}pt`,
+    };
+
+    const headerFonts = {
+      order: `${calcHeaderFitFont(columnWidths.order, 'ลำดับ')}pt`,
+      studentId: `${calcHeaderFitFont(columnWidths.studentId, 'รหัสนักเรียน')}pt`,
+      citizenId: `${calcHeaderFitFont(columnWidths.citizenId, 'เลขประจำตัวประชาชน')}pt`,
+      fullName: `${calcHeaderFitFont(columnWidths.fullName, 'ชื่อ - นามสกุล')}pt`,
+      birthDate: `${calcHeaderFitFont(columnWidths.birthDate, 'วันเกิด')}pt`,
+      guardianName: `${calcHeaderFitFont(columnWidths.guardianName, 'ชื่อผู้ปกครอง')}pt`,
+      guardianCitizenId: `${calcHeaderFitFont(columnWidths.guardianCitizenId, 'เลขประชาชนผู้ปกครอง')}pt`,
+      remarks: `${calcHeaderFitFont(columnWidths.remarks, 'หมายเหตุ')}pt`,
+    };
 
     return {
-      fontSize: `${fontSizeNum}pt`,
-      headerFontSize: `${headerFontSizeNum}pt`,
+      fontSize: `${baseFontSizeNum}pt`,
+      headerFontSize: `${baseHeaderFontSizeNum}pt`,
       titleFontSize: `${titleFontSizeNum}pt`,
       subTitleFontSize: `${subTitleFontSizeNum}pt`,
       headerInfoFontSize: `${headerInfoFontSizeNum}pt`,
       cellPaddingY,
       cellPaddingX,
       rowHeightClass,
-      fontSizeNum,
+      fontSizeNum: baseFontSizeNum,
+      colFonts,
+      headerFonts,
     };
-  }, [classStudents.length, totalColSpan]);
+  }, [classStudents.length, totalColSpan, columnWidths, maxLengths]);
 
   // Actions
   const handlePrint = () => {
@@ -376,9 +512,19 @@ export const ClassRosterView: React.FC<ClassRosterViewProps> = ({
         </div>
       </div>
 
+      {/* Injected Print Stylesheet for A4 Portrait Roster Print */}
+      <style>{`
+        @media print {
+          @page {
+            size: A4 portrait !important;
+            margin: 8mm !important;
+          }
+        }
+      `}</style>
+
       {/* Document Sheet Preview: Standard A4 Portrait Paper Simulation */}
       <div 
-        className="bg-white rounded-2xl p-6 sm:p-8 border border-black/30 shadow-xl text-black mx-auto max-w-[210mm] overflow-hidden print:p-0 print:m-0 print:border-none print:shadow-none print:rounded-none" 
+        className="bg-white rounded-2xl p-6 sm:p-8 border border-black/30 shadow-xl text-black mx-auto max-w-[210mm] w-full overflow-hidden print:p-0 print:m-0 print:border-none print:shadow-none print:rounded-none" 
         style={{ fontFamily: 'Sarabun, sans-serif', fontSize: tableScale.fontSize, color: '#000' }}
       >
         {/* Document Official Header */}
@@ -408,55 +554,88 @@ export const ClassRosterView: React.FC<ClassRosterViewProps> = ({
           </div>
         </div>
 
-        {/* Document Table (Dynamic Columns, Dynamic Font Scaling, Non-bold data cells, Pure Black) */}
-        <div className="mt-3 overflow-x-auto">
-          <table className="w-full border-collapse border border-black text-black" style={{ fontSize: tableScale.fontSize, color: '#000' }}>
+        {/* Document Table (Dynamic Columns, Dynamic Font Scaling, Single-Line Cells, Pure Black, Table-Fixed) */}
+        <div className="mt-3 w-full overflow-x-hidden">
+          <table className="w-full table-fixed border-collapse border border-black text-black" style={{ fontSize: tableScale.fontSize, color: '#000' }}>
+            <colgroup>
+              <col style={{ width: `${columnWidths.order}%` }} />
+              {showStudentId && <col style={{ width: `${columnWidths.studentId}%` }} />}
+              {showCitizenId && <col style={{ width: `${columnWidths.citizenId}%` }} />}
+              {showFullName && <col style={{ width: `${columnWidths.fullName}%` }} />}
+              {showBirthDate && <col style={{ width: `${columnWidths.birthDate}%` }} />}
+              {showGuardianName && <col style={{ width: `${columnWidths.guardianName}%` }} />}
+              {showGuardianCitizenId && <col style={{ width: `${columnWidths.guardianCitizenId}%` }} />}
+              {Array.from({ length: blankColCount }, (_, i) => (
+                <col key={`col-blank-${i}`} style={{ width: `${columnWidths.eachBlank}%` }} />
+              ))}
+              <col style={{ width: `${columnWidths.remarks}%` }} />
+            </colgroup>
             <thead>
               <tr className="bg-slate-100 text-black font-bold text-center" style={{ fontSize: tableScale.headerFontSize }}>
-                <th className={`border border-black ${tableScale.cellPaddingY} ${tableScale.cellPaddingX} w-10 text-center text-black`}>
+                <th 
+                  className={`border border-black ${tableScale.cellPaddingY} ${tableScale.cellPaddingX} text-center text-black font-bold whitespace-nowrap overflow-hidden`}
+                  style={{ fontSize: tableScale.headerFonts.order }}
+                >
                   ลำดับ
                 </th>
                 {showStudentId && (
-                  <th className={`border border-black ${tableScale.cellPaddingY} ${tableScale.cellPaddingX} w-20 text-center text-black`}>
+                  <th 
+                    className={`border border-black ${tableScale.cellPaddingY} ${tableScale.cellPaddingX} text-center text-black font-bold whitespace-nowrap overflow-hidden`}
+                    style={{ fontSize: tableScale.headerFonts.studentId }}
+                  >
                     รหัสนักเรียน
                   </th>
                 )}
                 {showCitizenId && (
-                  <th className={`border border-black ${tableScale.cellPaddingY} ${tableScale.cellPaddingX} w-28 text-center text-black`}>
+                  <th 
+                    className={`border border-black ${tableScale.cellPaddingY} ${tableScale.cellPaddingX} text-center text-black font-bold whitespace-nowrap overflow-hidden`}
+                    style={{ fontSize: tableScale.headerFonts.citizenId }}
+                  >
                     เลขประจำตัวประชาชน
                   </th>
                 )}
                 {showFullName && (
-                  <th className={`border border-black ${tableScale.cellPaddingY} ${tableScale.cellPaddingX} min-w-[140px] text-left text-black`}>
+                  <th 
+                    className={`border border-black ${tableScale.cellPaddingY} ${tableScale.cellPaddingX} text-left text-black font-bold whitespace-nowrap overflow-hidden`}
+                    style={{ fontSize: tableScale.headerFonts.fullName }}
+                  >
                     ชื่อ - นามสกุล
                   </th>
                 )}
                 {showBirthDate && (
-                  <th className={`border border-black ${tableScale.cellPaddingY} ${tableScale.cellPaddingX} w-24 text-center text-black`}>
+                  <th 
+                    className={`border border-black ${tableScale.cellPaddingY} ${tableScale.cellPaddingX} text-center text-black font-bold whitespace-nowrap overflow-hidden`}
+                    style={{ fontSize: tableScale.headerFonts.birthDate }}
+                  >
                     วันเกิด
                   </th>
                 )}
                 {showGuardianName && (
-                  <th className={`border border-black ${tableScale.cellPaddingY} ${tableScale.cellPaddingX} min-w-[120px] text-left text-black`}>
+                  <th 
+                    className={`border border-black ${tableScale.cellPaddingY} ${tableScale.cellPaddingX} text-left text-black font-bold whitespace-nowrap overflow-hidden`}
+                    style={{ fontSize: tableScale.headerFonts.guardianName }}
+                  >
                     ชื่อผู้ปกครอง
                   </th>
                 )}
                 {showGuardianCitizenId && (
-                  <th className={`border border-black ${tableScale.cellPaddingY} ${tableScale.cellPaddingX} w-28 text-center text-black`}>
+                  <th 
+                    className={`border border-black ${tableScale.cellPaddingY} ${tableScale.cellPaddingX} text-center text-black font-bold whitespace-nowrap overflow-hidden`}
+                    style={{ fontSize: tableScale.headerFonts.guardianCitizenId }}
+                  >
                     เลขประชาชนผู้ปกครอง
                   </th>
                 )}
 
-                {/* Dynamic Blank Check Columns - left side touches student name, right side touches remarks */}
-                {blankColCount === 1 ? (
-                  <th className={`border border-black ${tableScale.cellPaddingY} px-0.5 min-w-[140px] bg-slate-50 text-center`}></th>
-                ) : (
-                  Array.from({ length: blankColCount }, (_, i) => (
-                    <th key={i} className={`border border-black ${tableScale.cellPaddingY} px-0.5 w-6 min-w-[22px] bg-slate-50`}></th>
-                  ))
-                )}
+                {/* Dynamic Blank Check Columns - all expanding equally, contiguous between info and remarks */}
+                {Array.from({ length: blankColCount }, (_, i) => (
+                  <th key={`th-blank-${i}`} className={`border border-black ${tableScale.cellPaddingY} bg-slate-50 text-center`}></th>
+                ))}
 
-                <th className={`border border-black ${tableScale.cellPaddingY} ${tableScale.cellPaddingX} w-20 text-center text-black`}>
+                <th 
+                  className={`border border-black ${tableScale.cellPaddingY} ${tableScale.cellPaddingX} text-center text-black font-bold whitespace-nowrap overflow-hidden`}
+                  style={{ fontSize: tableScale.headerFonts.remarks }}
+                >
                   หมายเหตุ
                 </th>
               </tr>
@@ -464,57 +643,77 @@ export const ClassRosterView: React.FC<ClassRosterViewProps> = ({
             <tbody>
               {classStudents.length === 0 ? (
                 <tr>
-                  <td colSpan={totalColSpan} className={`border border-black p-6 text-center text-black`} style={{ fontSize: tableScale.fontSize }}>
+                  <td colSpan={totalColSpan} className={`border border-black p-6 text-center text-black whitespace-nowrap`} style={{ fontSize: tableScale.fontSize }}>
                     ไม่พบข้อมูลนักเรียนในชั้นเรียนนี้ (สามารถเพิ่มข้อมูลในเมนูเพิ่มนักเรียน)
                   </td>
                 </tr>
               ) : (
                 classStudents.map((s, idx) => (
                   <tr key={s.id} className={`text-black ${tableScale.rowHeightClass}`} style={{ fontSize: tableScale.fontSize }}>
-                    <td className={`border border-black ${tableScale.cellPaddingY} ${tableScale.cellPaddingX} text-center font-normal text-black`}>
+                    <td 
+                      className={`border border-black ${tableScale.cellPaddingY} ${tableScale.cellPaddingX} text-center font-normal text-black whitespace-nowrap overflow-hidden`}
+                      style={{ fontSize: tableScale.colFonts.order }}
+                    >
                       {idx + 1}
                     </td>
                     {showStudentId && (
-                      <td className={`border border-black ${tableScale.cellPaddingY} ${tableScale.cellPaddingX} text-center font-normal text-black`}>
+                      <td 
+                        className={`border border-black ${tableScale.cellPaddingY} ${tableScale.cellPaddingX} text-center font-normal text-black whitespace-nowrap overflow-hidden`}
+                        style={{ fontSize: tableScale.colFonts.studentId }}
+                      >
                         {s.studentId}
                       </td>
                     )}
                     {showCitizenId && (
-                      <td className={`border border-black ${tableScale.cellPaddingY} ${tableScale.cellPaddingX} text-center font-normal text-black`}>
+                      <td 
+                        className={`border border-black ${tableScale.cellPaddingY} ${tableScale.cellPaddingX} text-center font-normal text-black whitespace-nowrap overflow-hidden`}
+                        style={{ fontSize: tableScale.colFonts.citizenId }}
+                      >
                         {s.citizenId || '-'}
                       </td>
                     )}
                     {showFullName && (
-                      <td className={`border border-black ${tableScale.cellPaddingY} ${tableScale.cellPaddingX} font-normal text-black whitespace-nowrap`}>
+                      <td 
+                        className={`border border-black ${tableScale.cellPaddingY} ${tableScale.cellPaddingX} text-left font-normal text-black whitespace-nowrap overflow-hidden`}
+                        style={{ fontSize: tableScale.colFonts.fullName }}
+                      >
                         {s.prefix}{s.firstName} {s.lastName}
                       </td>
                     )}
                     {showBirthDate && (
-                      <td className={`border border-black ${tableScale.cellPaddingY} ${tableScale.cellPaddingX} text-center font-normal text-black whitespace-nowrap`}>
+                      <td 
+                        className={`border border-black ${tableScale.cellPaddingY} ${tableScale.cellPaddingX} text-center font-normal text-black whitespace-nowrap overflow-hidden`}
+                        style={{ fontSize: tableScale.colFonts.birthDate }}
+                      >
                         {formatThaiBirthDate(s.birthDate)}
                       </td>
                     )}
                     {showGuardianName && (
-                      <td className={`border border-black ${tableScale.cellPaddingY} ${tableScale.cellPaddingX} font-normal text-black whitespace-nowrap`}>
+                      <td 
+                        className={`border border-black ${tableScale.cellPaddingY} ${tableScale.cellPaddingX} text-left font-normal text-black whitespace-nowrap overflow-hidden`}
+                        style={{ fontSize: tableScale.colFonts.guardianName }}
+                      >
                         {`${s.guardianPrefix || ''}${s.guardianFirstName || ''} ${s.guardianLastName || ''}`.trim() || '-'}
                       </td>
                     )}
                     {showGuardianCitizenId && (
-                      <td className={`border border-black ${tableScale.cellPaddingY} ${tableScale.cellPaddingX} text-center font-normal text-black`}>
+                      <td 
+                        className={`border border-black ${tableScale.cellPaddingY} ${tableScale.cellPaddingX} text-center font-normal text-black whitespace-nowrap overflow-hidden`}
+                        style={{ fontSize: tableScale.colFonts.guardianCitizenId }}
+                      >
                         {s.guardianCitizenId || '-'}
                       </td>
                     )}
 
-                    {/* Dynamic Blank Columns - if 1 column, it is a long wide block */}
-                    {blankColCount === 1 ? (
-                      <td className={`border border-black p-0 min-w-[140px] ${tableScale.rowHeightClass}`}></td>
-                    ) : (
-                      Array.from({ length: blankColCount }, (_, i) => (
-                        <td key={i} className={`border border-black p-0 w-6 min-w-[22px] ${tableScale.rowHeightClass}`}></td>
-                      ))
-                    )}
+                    {/* Dynamic Blank Columns - all expanding equally, contiguous between info and remarks */}
+                    {Array.from({ length: blankColCount }, (_, i) => (
+                      <td key={`td-blank-${i}`} className={`border border-black p-0 ${tableScale.rowHeightClass}`}></td>
+                    ))}
 
-                    <td className={`border border-black ${tableScale.cellPaddingY} ${tableScale.cellPaddingX} text-center font-normal text-black`}>
+                    <td 
+                      className={`border border-black ${tableScale.cellPaddingY} ${tableScale.cellPaddingX} text-center font-normal text-black whitespace-nowrap overflow-hidden`}
+                      style={{ fontSize: tableScale.colFonts.remarks }}
+                    >
                       {s.cannotDischarge ? 'ยังไม่จำหน่าย' : ''}
                     </td>
                   </tr>
